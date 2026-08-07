@@ -190,7 +190,7 @@ export default function IncidentDetailPage({
                 minWidth: 190,
               }}
             >
-              <Kicker>CONFIDENCE</Kicker>
+              <Kicker>SIGNAL</Kicker>
               <span
                 style={{
                   fontFamily: "var(--font-heading)",
@@ -199,11 +199,21 @@ export default function IncidentDetailPage({
                   color: theme.color,
                 }}
               >
-                98%
+                {events.filter((e) => e.event_type === "use").length}
+                <span style={{ fontSize: 17, color: "var(--color-dim)" }}>
+                  {" "}
+                  use
+                </span>
               </span>
               <span style={{ fontSize: 12, color: "var(--color-dim)" }}>
-                Decoys have no legitimate use — a decoy being used is never a
-                false positive.
+                {events.filter((e) => e.event_type === "access").length} access
+                event
+                {events.filter((e) => e.event_type === "access").length === 1
+                  ? ""
+                  : "s"}{" "}
+                logged alongside. A decoy has no legitimate use, so a use event
+                is attacker activity by construction — there is no confidence
+                score to compute.
               </span>
             </div>
           </div>
@@ -336,6 +346,27 @@ export default function IncidentDetailPage({
                   </div>
                 </div>
               </div>
+            </div>
+
+            <a
+              href={`/api/incidents/${incident.id}/siem`}
+              target="_blank"
+              rel="noreferrer"
+              className="wt-btn wt-btn-secondary"
+              style={{ marginTop: 20, width: "100%" }}
+            >
+              View SIEM/SOAR payload
+            </a>
+            <div
+              className="wt-mono"
+              style={{
+                marginTop: 6,
+                fontSize: 10.5,
+                color: "var(--color-faint)",
+                lineHeight: 1.6,
+              }}
+            >
+              ECS-SHAPED JSON · NOT VALIDATED AGAINST A LIVE INDEXER
             </div>
 
             <Blueprint
