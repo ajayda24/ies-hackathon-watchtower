@@ -4,6 +4,7 @@ import {
   DECOY_SCHEMA,
   DECOY_SYSTEM,
   NARRATIVE_SYSTEM,
+  REPORT_SYSTEM,
   decoyUserPrompt,
   parseDraft,
   type DecoyDraft,
@@ -69,18 +70,32 @@ export function groqProvider(): Provider {
     },
 
     async writeNarrative(prompt: string): Promise<string> {
-      const completion = await client.chat.completions.create({
-        model,
-        max_tokens: 600,
-        messages: [
-          { role: "system", content: NARRATIVE_SYSTEM },
-          { role: "user", content: prompt },
-        ],
-      })
-
-      const text = completion.choices[0]?.message?.content?.trim()
-      if (!text) throw new Error("Groq returned an empty narrative")
-      return text
+      return prose(prompt, NARRATIVE_SYSTEM, 600)
     },
+
+    async writeReport(prompt: string): Promise<string> {
+      // Reports are multi-section documents, so they need materially more
+      // room than the two-paragraph narrative.
+      return prose(prompt, REPORT_SYSTEM, 2200)
+    },
+  }
+
+  async function prose(
+    prompt: string,
+    system: string,
+    maxTokens: number
+  ): Promise<string> {
+    const completion = await client.chat.completions.create({
+      model,
+      max_tokens: maxTokens,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: prompt },
+      ],
+    })
+
+    const text = completion.choices[0]?.message?.content?.trim()
+    if (!text) throw new Error("Groq returned an empty response")
+    return text
   }
 }

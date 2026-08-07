@@ -406,11 +406,19 @@ export default function IncidentDetailPage({
             </div>
 
             <a
+              href={`/incidents/${incident.id}/report`}
+              className="wt-btn wt-btn-primary"
+              style={{ marginTop: 22, width: "100%" }}
+            >
+              Generate incident report
+            </a>
+
+            <a
               href={`/api/incidents/${incident.id}/siem`}
               target="_blank"
               rel="noreferrer"
               className="wt-btn wt-btn-secondary"
-              style={{ marginTop: 20, width: "100%" }}
+              style={{ marginTop: 8, width: "100%" }}
             >
               View SIEM/SOAR payload
             </a>

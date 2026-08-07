@@ -115,6 +115,35 @@ export default function MapPage() {
                 <ZoneCard key={dept.id} dept={dept} index={i} events={events} />
               ))}
 
+              {data && (
+                <a
+                  href="/register"
+                  className="wt-blueprint"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: 16,
+                    minHeight: 150,
+                    borderStyle: "dashed",
+                    borderColor: "#2a333c",
+                    color: "var(--color-faint)",
+                  }}
+                >
+                  <span style={{ fontSize: 26, fontWeight: 300, lineHeight: 1 }}>
+                    +
+                  </span>
+                  <span
+                    className="wt-mono"
+                    style={{ fontSize: 10, letterSpacing: ".1em" }}
+                  >
+                    ADD DEPARTMENT
+                  </span>
+                </a>
+              )}
+
               {!data && (
                 <div
                   className="wt-mono"
