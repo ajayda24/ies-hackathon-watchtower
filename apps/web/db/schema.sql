@@ -41,15 +41,16 @@ create table if not exists events (
   raw_details   jsonb not null default '{}'::jsonb
 );
 
+-- No attribution columns by design. The evidence supports a source address and
+-- an ordered sequence of actions; it does not identify a person, an
+-- organisation or a country. A stored profile or confidence score would imply
+-- something computed one. The plain-English summary is derived on read.
 create table if not exists incidents (
   id                     uuid primary key default gen_random_uuid(),
   department_id          uuid not null references departments(id) on delete cascade,
   source_ip              text not null,
   severity               text not null default 'medium'
                            check (severity in ('low','medium','high','critical')),
-  attribution_profile    text not null default 'Unclassified',
-  attribution_confidence real not null default 0,
-  attribution_narrative  text not null default '',
   status                 text not null default 'open'
                            check (status in ('open','contained','closed')),
   created_at             timestamptz not null default now(),
