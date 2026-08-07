@@ -1,0 +1,66 @@
+import type { NextRequest } from "next/server"
+
+import { recordTrigger } from "@/lib/correlation"
+import { clientIp } from "@/lib/request"
+import { ensureSeeded } from "@/lib/seed"
+import { listHoneytokens } from "@/lib/store"
+import type { Honeytoken } from "@/lib/types"
+
+/**
+ * Mock login portal — the `use` path, and the sharpest signal in the system.
+ *
+ * Seeded credential content is stored as "username / password". A submission
+ * matching a decoy's username means someone took a planted credential and
+ * tried to authenticate with it. No legitimate process does that, so this
+ * escalates immediately.
+ */
+function matchCredential(username: string): Honeytoken | undefined {
+  return listHoneytokens().find((token) => {
+    if (token.type !== "credential") return false
+    const [user] = token.content.split("/").map((s) => s.trim())
+    return user?.toLowerCase() === username.trim().toLowerCase()
+  })
+}
+
+export async function POST(req: NextRequest) {
+  ensureSeeded()
+
+  let username = ""
+  let password = ""
+
+  // Accept both JSON and form posts so the decoy page can be a plain <form>.
+  const contentType = req.headers.get("content-type") ?? ""
+  if (contentType.includes("application/json")) {
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
+    username = String(body.username ?? "")
+    password = String(body.password ?? "")
+  } else {
+    const form = await req.formData().catch(() => null)
+    username = String(form?.get("username") ?? "")
+    password = String(form?.get("password") ?? "")
+  }
+
+  const token = matchCredential(username)
+
+  if (token) {
+    recordTrigger({
+      token,
+      eventType: "use",
+      sourceIp: clientIp(req),
+      details: {
+        submitted_username: username,
+        // Never store the submitted secret; length alone is enough to show
+        // whether the planted password was used verbatim.
+        submitted_password_length: password.length,
+        user_agent: req.headers.get("user-agent") ?? "unknown",
+        vector: "mock_login_portal",
+      },
+    })
+  }
+
+  // Uniform failure either way. The attacker must not learn they hit a decoy.
+  return Response.json(
+    { ok: false, error: "Invalid username or password." },
+    { status: 401 }
+  )
+}
