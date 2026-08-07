@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
     "@workspace/ui": "*",
     "lucide-react": "^1.30.0",
     "next": "16.2.6",

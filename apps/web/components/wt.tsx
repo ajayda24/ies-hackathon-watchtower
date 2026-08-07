@@ -133,14 +133,16 @@ export function TopNav({
   orgName,
   right,
 }: {
-  active: "map" | "telemetry" | "incidents"
+  active: "map" | "deception" | "telemetry" | "incidents" | "scope"
   orgName: string
   right?: ReactNode
 }) {
   const items: Array<{ key: typeof active; label: string; href: string }> = [
     { key: "map", label: "Map", href: "/" },
+    { key: "deception", label: "Deception", href: "/deception" },
     { key: "telemetry", label: "Telemetry", href: "/telemetry" },
     { key: "incidents", label: "Incidents", href: "/incidents" },
+    { key: "scope", label: "Scope", href: "/scope" },
   ]
 
   return (
