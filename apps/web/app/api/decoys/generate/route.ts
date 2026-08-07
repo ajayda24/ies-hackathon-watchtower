@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server"
 
-import { aiConfigured, generateDecoy } from "@/lib/ai/generate-decoy"
+import { activeProvider, generateDecoy } from "@/lib/ai/generate-decoy"
 import { ORG_NAME } from "@/lib/org"
 import { ensureSeeded } from "@/lib/seed"
 import { getDepartment, listHoneytokens } from "@/lib/store"
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       type,
       department_id: department.id,
       department_name: department.name,
-      ai_configured: aiConfigured(),
+      configured_provider: activeProvider(),
     },
     { headers: { "cache-control": "no-store" } }
   )

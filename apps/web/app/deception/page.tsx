@@ -13,12 +13,14 @@ interface Proposal {
   location: string
   rationale: string
   source: "ai" | "fallback"
+  provider: "groq" | "anthropic" | "fallback"
+  model?: string
   elapsed_ms: number
   error?: string
   type: HoneytokenType
   department_id: string
   department_name: string
-  ai_configured: boolean
+  configured_provider: { name: string; model?: string }
 }
 
 const TYPES: Array<{ value: HoneytokenType; label: string; hint: string }> = [
@@ -457,7 +459,9 @@ function Proposed({
         }}
       >
         <Kicker color={live ? "var(--color-accent)" : "var(--warn)"}>
-          {live ? "AI GENERATED · CLAUDE" : "PRE-CACHED FALLBACK"}
+          {live
+            ? `AI GENERATED · ${proposal.provider.toUpperCase()}`
+            : "PRE-CACHED FALLBACK"}
         </Kicker>
         <span
           className="wt-mono"
@@ -467,6 +471,20 @@ function Proposed({
         </span>
         {live && <LiveDot color="var(--ok)" />}
       </div>
+
+      {live && proposal.model && (
+        <div
+          className="wt-mono"
+          style={{
+            fontSize: 10,
+            color: "var(--color-faint)",
+            marginBottom: 8,
+            overflowWrap: "anywhere",
+          }}
+        >
+          {proposal.model}
+        </div>
+      )}
 
       <div
         style={{

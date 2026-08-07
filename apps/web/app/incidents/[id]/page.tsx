@@ -44,6 +44,31 @@ export default function IncidentDetailPage({
   const { id } = use(params)
   const [detail, setDetail] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [ai, setAi] = useState<{
+    text: string
+    provider: string
+    model?: string
+    elapsed_ms: number
+  } | null>(null)
+  const [aiState, setAiState] = useState<"idle" | "busy" | "unavailable">("idle")
+
+  async function requestNarrative() {
+    setAiState("busy")
+    try {
+      const res = await fetch(`/api/incidents/${id}/narrative`, {
+        method: "POST",
+      })
+      if (res.status === 503) {
+        setAiState("unavailable")
+        return
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setAi(await res.json())
+      setAiState("idle")
+    } catch {
+      setAiState("unavailable")
+    }
+  }
 
   useEffect(() => {
     let alive = true
@@ -265,30 +290,62 @@ export default function IncidentDetailPage({
                 style={{ marginBottom: 10 }}
               >
                 ATTRIBUTION · PLAIN ENGLISH
+                {ai && ` · ${ai.provider.toUpperCase()}`}
               </Kicker>
-              {narrative(incident, events, department?.name).map((para, i) => (
+
+              {(ai
+                ? ai.text.split(/\n{2,}/).filter(Boolean)
+                : narrative(incident, events, department?.name)
+              ).map((para, i) => (
                 <p
                   key={i}
-                  style={{
-                    margin: i === 0 ? "0 0 10px" : "0 0 10px",
-                    fontSize: 14.5,
-                    lineHeight: 1.65,
-                  }}
+                  style={{ margin: "0 0 10px", fontSize: 14.5, lineHeight: 1.65 }}
                 >
                   {para}
                 </p>
               ))}
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  color: "var(--color-faint)",
-                  lineHeight: 1.6,
-                }}
-              >
-                Rule-derived summary. An LLM-written narrative replaces this text
-                when a key is configured.
-              </p>
+
+              {ai ? (
+                <div
+                  className="wt-mono"
+                  style={{
+                    fontSize: 10.5,
+                    color: "var(--color-faint)",
+                    lineHeight: 1.6,
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {ai.model} · {(ai.elapsed_ms / 1000).toFixed(1)}s
+                </div>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      margin: "0 0 10px",
+                      fontSize: 12,
+                      color: "var(--color-faint)",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {aiState === "unavailable"
+                      ? "Rule-derived summary. No AI provider is configured, so this is what the timeline shows."
+                      : "Rule-derived summary, built from the events above."}
+                  </p>
+                  {aiState !== "unavailable" && (
+                    <button
+                      type="button"
+                      onClick={requestNarrative}
+                      disabled={aiState === "busy"}
+                      className="wt-btn wt-btn-secondary"
+                      style={{ width: "100%" }}
+                    >
+                      {aiState === "busy"
+                        ? "Writing…"
+                        : "Rewrite in plain English"}
+                    </button>
+                  )}
+                </>
+              )}
             </Blueprint>
 
             <Kicker style={{ marginBottom: 14 }}>CONTAINMENT · AUTONOMOUS</Kicker>
