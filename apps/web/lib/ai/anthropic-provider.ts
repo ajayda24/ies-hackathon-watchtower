@@ -4,6 +4,7 @@ import {
   DECOY_SCHEMA,
   DECOY_SYSTEM,
   NARRATIVE_SYSTEM,
+  REPORT_SYSTEM,
   decoyUserPrompt,
   type DecoyDraft,
   type DecoyRequest,
@@ -44,21 +45,35 @@ export function anthropicProvider(): Provider {
     },
 
     async writeNarrative(prompt: string): Promise<string> {
-      const response = await client.messages.create({
-        model,
-        max_tokens: 1000,
-        system: NARRATIVE_SYSTEM,
-        messages: [{ role: "user", content: prompt }],
-      })
-
-      const text = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text)
-        .join("")
-        .trim()
-
-      if (!text) throw new Error("model returned an empty narrative")
-      return text
+      return prose(prompt, NARRATIVE_SYSTEM, 1000)
     },
+
+    async writeReport(prompt: string): Promise<string> {
+      // Reports are multi-section documents, so they need materially more
+      // room than the two-paragraph narrative.
+      return prose(prompt, REPORT_SYSTEM, 3000)
+    },
+  }
+
+  async function prose(
+    prompt: string,
+    system: string,
+    maxTokens: number
+  ): Promise<string> {
+    const response = await client.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: "user", content: prompt }],
+    })
+
+    const text = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim()
+
+    if (!text) throw new Error("model returned an empty response")
+    return text
   }
 }

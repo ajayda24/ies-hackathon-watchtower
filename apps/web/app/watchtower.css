@@ -63,11 +63,16 @@
   margin: 0 0 6.8px;
 }
 
-.wt a {
+/* Link colour applies to prose links only. `:not(.wt-btn)` is load-bearing:
+   `.wt a` (0,1,1) outranks `.wt-btn-primary` (0,1,0), so without the exclusion
+   an anchor styled as a primary button gets accent-coloured text on an
+   accent-coloured background — the same colour, invisible. Buttons carry their
+   own colour from the .wt-btn rules below. */
+.wt a:not(.wt-btn) {
   color: var(--color-accent);
   text-decoration: none;
 }
-.wt a:hover {
+.wt a:not(.wt-btn):hover {
   color: var(--color-accent-bright);
 }
 
@@ -184,13 +189,28 @@
   border-color: var(--color-accent-bright);
   color: #0b0e11;
 }
+/* Stated rather than inherited, so the variant never depends on which element
+   it lands on. */
+.wt-btn-secondary {
+  background: transparent;
+  border-color: var(--color-divider);
+  color: var(--color-text);
+}
 .wt-btn-secondary:hover {
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  color: var(--color-text);
 }
 .wt-btn-crit {
   background: var(--crit);
   border-color: var(--crit);
   color: #0b0e11;
+}
+
+/* A disabled button must read as disabled without becoming unreadable. */
+.wt-btn:disabled,
+.wt-btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .wt-table {
@@ -342,6 +362,98 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   Paper — the incident report document view
+   ══════════════════════════════════════════════════════════════════════════
+
+   The one place the product inverts to a light ground: a report gets printed,
+   attached to an email, or handed to a board, so it is styled as the document
+   it becomes rather than as another console screen.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.wt-paper {
+  display: block;
+  width: min(820px, 100%);
+  margin: 0 auto;
+  background: #f2f2f3;
+  color: #1d1f20;
+  padding: clamp(24px, 5vw, 56px) clamp(20px, 5vw, 60px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.wt-paper-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 18px;
+  margin: 0 0 32px;
+}
+/* Ids, org names and model names are all unbreakable tokens. */
+.wt-paper header,
+.wt-paper footer,
+.wt-paper-meta {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.wt-paper-body {
+  font-size: 14.5px;
+  line-height: 1.7;
+  /* Report prose is model-written and routinely contains unbreakable strings —
+     UNC paths, tracking ids, technique codes. Without this a single long token
+     widens the page, and which report triggers it varies per generation. */
+  overflow-wrap: anywhere;
+}
+.wt-paper-body h3 {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5d5d60;
+  margin: 26px 0 8px;
+}
+.wt-paper-body h3:first-child {
+  margin-top: 0;
+}
+.wt-paper-body p {
+  margin: 0 0 14px;
+}
+.wt-paper-body ul,
+.wt-paper-body ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+.wt-paper-body li {
+  margin-bottom: 7px;
+}
+.wt-paper-body code {
+  font-size: 12.5px;
+  background: rgba(29, 31, 32, 0.07);
+  padding: 1px 5px;
+}
+
+/* Printing drops the console chrome entirely — what remains is the document. */
+@media print {
+  .wt {
+    background: #fff;
+    padding: 0;
+  }
+  .wt-nav,
+  .wt-btn,
+  .wt-corner {
+    display: none !important;
+  }
+  .wt-shell {
+    box-shadow: none;
+    border: 0;
+    max-width: none;
+  }
+  .wt-paper {
+    width: 100%;
+    box-shadow: none;
+    padding: 0;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    Responsive layout
    ══════════════════════════════════════════════════════════════════════════
 
@@ -361,7 +473,7 @@
 }
 
 .wt-shell {
-  max-width: 1280px;
+  max-width: var(--shell-max, 1280px);
   margin: 0 auto;
   background: var(--color-bg);
   box-shadow: var(--shadow-lg);
@@ -449,6 +561,70 @@
   /* The org name is context, not navigation — it goes once space is tight. */
   .wt-nav-org {
     display: none;
+  }
+}
+
+/* ── Large screens ────────────────────────────────────────────────────────
+   The board was drawn at 1280px. On a 1920px+ monitor that cap leaves the
+   console occupying about half the width, and because every size in this
+   sheet is a fixed px value, the whole thing reads as small rather than
+   merely narrow — an operator sits further from a 27" display, not closer.
+
+   So the shell widens *and* type steps up together. Widening alone would
+   stretch the layout while leaving 10px machine labels unreadable at desk
+   distance; scaling type alone would overflow a 1280px frame. The zone grid
+   and side rail grow with it so cards fill the extra width instead of the
+   row simply fitting more of them.
+   ──────────────────────────────────────────────────────────────────────── */
+@media (min-width: 1600px) {
+  .wt {
+    --shell-max: 1560px;
+    --rail: 320px;
+    font-size: 16.5px;
+  }
+  .wt-board {
+    padding: 52px 56px 90px;
+  }
+  .wt-zones {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .wt-btn {
+    font-size: 15px;
+    padding: 8px 15px;
+  }
+  .wt-table {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 2000px) {
+  .wt {
+    --shell-max: 1840px;
+    --rail: 360px;
+    font-size: 18px;
+  }
+  .wt-board {
+    padding: 64px 64px 100px;
+  }
+  .wt-zones {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 24px;
+  }
+  .wt-btn {
+    font-size: 16px;
+    padding: 9px 17px;
+  }
+  .wt-table {
+    font-size: 16px;
+  }
+  /* Machine labels are the first thing to become illegible when the viewer
+     moves back from a large display; they carry the timestamps and IDs a
+     judge is asked to read. */
+  .wt-kicker,
+  .wt-status-line,
+  .wt-zone-label {
+    font-size: 12px;
   }
 }
 

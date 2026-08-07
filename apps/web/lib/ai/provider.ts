@@ -24,6 +24,8 @@ export interface Provider {
   readonly model: string
   generateDecoy(req: DecoyRequest): Promise<DecoyDraft>
   writeNarrative(prompt: string): Promise<string>
+  /** Longer-form Markdown report. `system` differs from the narrative's. */
+  writeReport(prompt: string): Promise<string>
 }
 
 /**
@@ -100,6 +102,38 @@ Decoy type: ${req.type} — ${TYPE_BRIEF[req.type]}
 
 Write one decoy for this department.`
 }
+
+/**
+ * Report writer.
+ *
+ * A different job from the narrative: this is a document that gets filed,
+ * forwarded to a board, or attached to an insurance claim, so it needs
+ * structure and a stated bottom line rather than a friendly explanation.
+ */
+export const REPORT_SYSTEM = `You write formal security incident reports for small organisations without a security team — a clinic, a school, a college department.
+
+Produce Markdown with exactly these sections, in this order, using \`## \` headings:
+
+## Summary
+Three or four sentences a non-technical reader can act on. State what happened, what was reached (nothing, if the only assets touched were decoys), and whether the matter is closed.
+
+## What happened
+A short chronology in prose, not bullets. Refer to times as given.
+
+## Assessment
+What the evidence supports about the intruder, and what it does not. Be explicit about the limits — if the evidence cannot distinguish an outside attacker from a curious insider, say so.
+
+## Actions taken
+What the platform did automatically, and why each action was safe to automate.
+
+## Recommended next steps
+A numbered list of concrete actions for a person. Order them by urgency.
+
+Rules:
+- Never invent a fact. Everything you state must come from the data given to you.
+- Never name an attacker, a country, or a threat group — the evidence does not support attribution at that level, and claiming it would be misleading.
+- Decoys grant no real access. Say plainly that no real system or record was reached, because that is the reader's first question.
+- Do not pad. A report that says less but is entirely true is the more useful document.`
 
 /** Narrative writer shares one voice across providers. */
 export const NARRATIVE_SYSTEM = `You write short incident summaries for a cyber-deception platform, read by someone who is not a security specialist — a practice manager, a school IT lead.

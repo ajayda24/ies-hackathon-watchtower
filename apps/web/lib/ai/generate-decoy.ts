@@ -113,18 +113,32 @@ export async function generateDecoy(params: {
  * the Threat Timeline can keep showing its rule-derived summary instead of an
  * empty panel.
  */
-export async function writeNarrative(prompt: string): Promise<{
+export async function writeNarrative(prompt: string): Promise<ProseResult | null> {
+  return prose(prompt, (p, text) => p.writeNarrative(text))
+}
+
+/** Generates the formal incident report. Null when no provider is configured. */
+export async function writeReport(prompt: string): Promise<ProseResult | null> {
+  return prose(prompt, (p, text) => p.writeReport(text))
+}
+
+export interface ProseResult {
   text: string
   provider: ProviderName
   model?: string
   elapsed_ms: number
-} | null> {
+}
+
+async function prose(
+  prompt: string,
+  call: (provider: Provider, prompt: string) => Promise<string>
+): Promise<ProseResult | null> {
   const provider = selectProvider()
   if (!provider) return null
 
   const started = Date.now()
   try {
-    const text = await provider.writeNarrative(prompt)
+    const text = await call(provider, prompt)
     return {
       text,
       provider: provider.name,
