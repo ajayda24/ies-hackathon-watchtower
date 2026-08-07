@@ -1,0 +1,89 @@
+-- Watchtower schema. Paste into the Supabase SQL editor when the project exists.
+-- Field names match apps/web/lib/types.ts exactly.
+
+create extension if not exists "pgcrypto";
+
+create table if not exists departments (
+  id                 uuid primary key default gen_random_uuid(),
+  name               text not null,
+  registration_token text not null unique,
+  security_level     text not null default 'secure'
+                       check (security_level in ('secure','warning','critical')),
+  created_at         timestamptz not null default now()
+);
+
+create table if not exists honeytokens (
+  id            uuid primary key default gen_random_uuid(),
+  department_id uuid not null references departments(id) on delete cascade,
+  type          text not null
+                  check (type in ('credential','document','api_key','source_code_secret')),
+  name          text not null,
+  content       text not null,
+  location      text not null,
+  tracking_id   text not null unique,
+  ai_generated  boolean not null default false,
+  status        text not null default 'active'
+                  check (status in ('active','triggered','revoked')),
+  created_at    timestamptz not null default now()
+);
+
+-- event_type is the access-vs-use distinction: 'access' is logged but never
+-- escalates; 'use' means decoy content was actually used and drives incidents.
+create table if not exists events (
+  id            uuid primary key default gen_random_uuid(),
+  token_id      uuid not null references honeytokens(id) on delete cascade,
+  department_id uuid not null references departments(id) on delete cascade,
+  event_type    text not null check (event_type in ('access','use')),
+  source_ip     text not null,
+  mitre_id      text not null,
+  mitre_name    text not null,
+  timestamp     timestamptz not null default now(),
+  raw_details   jsonb not null default '{}'::jsonb
+);
+
+create table if not exists incidents (
+  id                     uuid primary key default gen_random_uuid(),
+  department_id          uuid not null references departments(id) on delete cascade,
+  source_ip              text not null,
+  severity               text not null default 'medium'
+                           check (severity in ('low','medium','high','critical')),
+  attribution_profile    text not null default 'Unclassified',
+  attribution_confidence real not null default 0,
+  attribution_narrative  text not null default '',
+  status                 text not null default 'open'
+                           check (status in ('open','contained','closed')),
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now()
+);
+
+create table if not exists incident_events (
+  incident_id uuid not null references incidents(id) on delete cascade,
+  event_id    uuid not null references events(id) on delete cascade,
+  primary key (incident_id, event_id)
+);
+
+create table if not exists containment_actions (
+  id          uuid primary key default gen_random_uuid(),
+  incident_id uuid not null references incidents(id) on delete cascade,
+  action      text not null
+                check (action in ('CREDENTIAL_REVOKED','SESSION_ISOLATED','ALERT_ESCALATED')),
+  automated   boolean not null default true,
+  timestamp   timestamptz not null default now(),
+  details     text not null default ''
+);
+
+-- Correlation looks up open incidents by (source_ip, department_id) and counts
+-- recent 'use' events per source_ip; these two indexes cover both hot paths.
+create index if not exists idx_incidents_open
+  on incidents (department_id, source_ip) where status = 'open';
+create index if not exists idx_events_ip_time
+  on events (source_ip, timestamp desc);
+create index if not exists idx_events_dept_time
+  on events (department_id, timestamp desc);
+
+-- Realtime for the live org map. The dashboard subscribes to these directly.
+-- NOTE: this is the step that fails silently if skipped — the map simply never
+-- updates. The UI polls as a fallback, so the demo survives either way.
+alter publication supabase_realtime add table events;
+alter publication supabase_realtime add table incidents;
+alter publication supabase_realtime add table departments;
