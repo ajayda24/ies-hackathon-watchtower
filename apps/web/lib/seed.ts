@@ -76,6 +76,27 @@ const SEED: Array<{ name: string; token: string; tokens: SeedToken[] }> = [
       },
     ],
   },
+  {
+    // Carries the source-code decoy. The Deception Console offers four token
+    // types, so the default board has to demonstrate all four — otherwise the
+    // one type a judge picks at random is the one nothing has exercised.
+    name: "Research Computing",
+    token: "research-dept",
+    tokens: [
+      {
+        type: "source_code_secret",
+        name: "Sensor Pipeline .env",
+        content: "LAB_DATA_API_TOKEN=lab_sk_7f2Ke9RtVmQx4NbZ",
+        location: "git@github.internal:research/sensor-pipeline.git — .env",
+      },
+      {
+        type: "credential",
+        name: "HPC Cluster Scheduler Account",
+        content: "slurm_batch_svc / Gr1dRun#2025",
+        location: "\\\\fileserver\\research\\hpc\\scheduler-notes.md",
+      },
+    ],
+  },
 ]
 
 /**
