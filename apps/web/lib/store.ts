@@ -165,9 +165,15 @@ export function findOpenIncident(
 }
 
 export function createIncident(
-  input: Omit<Incident, "id" | "created_at" | "updated_at">
+  input: Omit<
+    Incident,
+    "id" | "created_at" | "updated_at" | "containment_latency_ms"
+  > & { containment_latency_ms?: number | null }
 ): Incident {
   const incident: Incident = {
+    // An incident always opens uncontained, so latency starts null and is
+    // stamped by recordTrigger() only if containment actually fires.
+    containment_latency_ms: null,
     ...input,
     id: newId(),
     created_at: now(),

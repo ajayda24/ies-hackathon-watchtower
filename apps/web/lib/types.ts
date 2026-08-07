@@ -81,6 +81,16 @@ export interface Incident {
   status: IncidentStatus
   created_at: string
   updated_at: string
+  /**
+   * Milliseconds from the triggering event being recorded to containment
+   * completing. Null until containment fires — an incident below the threshold
+   * has no containment to measure, and reporting 0 there would misrepresent it.
+   *
+   * Measured, not estimated: both ends are timestamps taken inside the same
+   * request in recordTrigger(). This is the number behind the "detection
+   * speed" claim, so it must never be a hardcoded figure.
+   */
+  containment_latency_ms: number | null
   /*
    * No attribution fields by design. Earlier drafts carried a profile, a
    * confidence score and a stored narrative; all three were written once at
