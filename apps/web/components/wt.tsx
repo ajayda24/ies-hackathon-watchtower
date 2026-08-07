@@ -144,17 +144,7 @@ export function TopNav({
   ]
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 22,
-        padding: "13px 22px",
-        borderBottom: "1px solid var(--color-divider)",
-        background: "var(--color-panel)",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="wt-nav">
       <span
         style={{
           fontFamily: "var(--font-heading)",
@@ -165,7 +155,7 @@ export function TopNav({
         WATCHTOWER
       </span>
       <span
-        className="wt-mono"
+        className="wt-mono wt-nav-org"
         style={{
           fontSize: 10,
           letterSpacing: ".12em",
@@ -178,10 +168,10 @@ export function TopNav({
         {orgName}
       </span>
       <div
+        className="wt-nav-links"
         style={{
           display: "flex",
           gap: 20,
-          marginLeft: 16,
           fontSize: 13,
           color: "var(--color-dim)",
         }}
@@ -204,16 +194,7 @@ export function TopNav({
           </a>
         ))}
       </div>
-      <div
-        style={{
-          marginLeft: "auto",
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        {right}
-      </div>
+      <div className="wt-nav-right">{right}</div>
     </div>
   )
 }

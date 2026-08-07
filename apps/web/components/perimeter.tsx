@@ -15,17 +15,21 @@ export function Perimeter({ departments }: { departments: DepartmentView[] }) {
     <div
       style={{
         position: "relative",
-        width: 224,
-        height: 224,
+        // Fluid, but never wider than the rail nor larger than its design
+        // size. aspectRatio keeps it circular at every width.
+        width: "min(224px, 100%)",
+        aspectRatio: "1",
         margin: "0 auto 22px",
         border: "1px solid var(--color-divider)",
         borderRadius: "50%",
       }}
     >
+      {/* Rings inset proportionally so they hold their spacing when the dial
+          scales down. */}
       <div
         style={{
           position: "absolute",
-          inset: 34,
+          inset: "15%",
           border: "1px solid var(--color-hairline)",
           borderRadius: "50%",
         }}
@@ -33,7 +37,7 @@ export function Perimeter({ departments }: { departments: DepartmentView[] }) {
       <div
         style={{
           position: "absolute",
-          inset: 74,
+          inset: "33%",
           border: "1px solid var(--color-hairline)",
           borderRadius: "50%",
         }}

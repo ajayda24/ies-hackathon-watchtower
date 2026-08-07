@@ -68,9 +68,8 @@ export function ZoneCard({
         }}
       >
         <span
-          className="wt-mono"
+          className="wt-mono wt-zone-label"
           style={{
-            fontSize: 9.5,
             letterSpacing: ".14em",
             color: dept.security_level === "secure" ? "var(--color-faint)" : theme.text,
           }}
@@ -112,18 +111,19 @@ export function ZoneCard({
       <div
         style={{
           fontFamily: "var(--font-heading)",
-          fontSize: 26,
+          fontSize: "clamp(20px, 2.4vw, 26px)",
           lineHeight: 1.1,
           marginBottom: 10,
+          // Long department names must wrap rather than push the card wide.
+          overflowWrap: "anywhere",
         }}
       >
         {dept.name}
       </div>
 
       <div
-        className="wt-mono"
+        className="wt-mono wt-status-line"
         style={{
-          fontSize: 10,
           letterSpacing: ".1em",
           color: theme.color,
           marginBottom: 12,

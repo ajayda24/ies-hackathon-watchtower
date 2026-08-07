@@ -33,7 +33,7 @@ export default async function DecoyDocumentPage({
         background: "#fff",
         color: "#000",
         minHeight: "100vh",
-        padding: "30px 20px",
+        padding: "clamp(12px, 4vw, 30px) clamp(10px, 3vw, 20px)",
       }}
     >
       <div
@@ -41,7 +41,7 @@ export default async function DecoyDocumentPage({
           maxWidth: 620,
           margin: "0 auto",
           border: "1px solid #999",
-          padding: "18px 20px 24px",
+          padding: "18px clamp(12px, 4vw, 20px) 24px",
         }}
       >
         <div
@@ -51,7 +51,9 @@ export default async function DecoyDocumentPage({
             color: "#444",
             background: "#e8e8e8",
             borderBottom: "1px solid #bbb",
-            margin: "-18px -20px 16px",
+            // Pulls the path strip out to the card edges; must track the
+            // card's own fluid horizontal padding.
+            margin: "-18px calc(-1 * clamp(12px, 4vw, 20px)) 16px",
             padding: "6px 8px",
             wordBreak: "break-all",
           }}

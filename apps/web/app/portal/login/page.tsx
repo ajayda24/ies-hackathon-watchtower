@@ -16,7 +16,7 @@ export default function DecoyLoginPage() {
         background: "#fff",
         color: "#000",
         minHeight: "100vh",
-        padding: "40px 20px",
+        padding: "clamp(16px, 5vw, 40px) clamp(12px, 4vw, 20px)",
       }}
     >
       <div
@@ -24,7 +24,7 @@ export default function DecoyLoginPage() {
           maxWidth: 380,
           margin: "0 auto",
           border: "1px solid #999",
-          padding: "26px 24px 30px",
+          padding: "clamp(18px, 5vw, 26px) clamp(16px, 5vw, 24px) 30px",
         }}
       >
         <div style={{ font: "bold 17px/1.3 Arial", marginBottom: 2 }}>
@@ -42,9 +42,11 @@ export default function DecoyLoginPage() {
             style={{
               width: "100%",
               border: "1px solid #767676",
-              padding: "5px 6px",
+              padding: "6px 6px",
               fontFamily: "monospace",
-              fontSize: 13,
+              // 16px minimum: iOS zooms the viewport on focus below this, which
+              // looks like a broken page mid-demo.
+              fontSize: 16,
               marginBottom: 12,
               background: "#fff",
             }}
@@ -58,9 +60,11 @@ export default function DecoyLoginPage() {
             style={{
               width: "100%",
               border: "1px solid #767676",
-              padding: "5px 6px",
+              padding: "6px 6px",
               fontFamily: "monospace",
-              fontSize: 13,
+              // 16px minimum: iOS zooms the viewport on focus below this, which
+              // looks like a broken page mid-demo.
+              fontSize: 16,
               marginBottom: 16,
               background: "#fff",
             }}

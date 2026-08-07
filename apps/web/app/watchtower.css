@@ -138,6 +138,14 @@
   letter-spacing: 0.14em;
   color: var(--color-faint);
 }
+/* Zone label and status caption. 9.5–10px reads fine at desk distance but not
+   in the hand, so both step up on small screens (see the 860px block). */
+.wt-status-line {
+  font-size: 10px;
+}
+.wt-zone-label {
+  font-size: 9.5px;
+}
 
 .wt-tag {
   display: inline-flex;
@@ -330,5 +338,223 @@
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Responsive layout
+   ══════════════════════════════════════════════════════════════════════════
+
+   The board is a control-tower console designed at 1280px. Narrowing it is a
+   reflow, not a rescale: the side rail moves below the main panel, wide
+   tables become stacked cards, and the frame's outside registration marks
+   are pulled in so they don't sit off-screen.
+
+   Breakpoints follow the content, not device names:
+     1180px — side rails stop fitting beside the main column
+      860px — multi-column headers and stat rows stop fitting
+      620px — table columns stop fitting; rows become cards
+   ══════════════════════════════════════════════════════════════════════ */
+
+.wt-board {
+  padding: 40px 44px 80px;
+}
+
+.wt-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+  /* Contains any child that would otherwise widen the page. The frame's
+     registration marks sit outside this box, so they are hidden here and
+     re-drawn by .wt-corner's own positioning; at <=860px they are dropped
+     anyway. */
+  min-width: 0;
+}
+
+/* Main column + side rail. The rail is fixed-width while it fits beside the
+   content, then becomes a full-width band stacked underneath. */
+.wt-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--rail, 268px);
+}
+.wt-split > * {
+  min-width: 0;
+}
+.wt-rail {
+  border-left: 1px solid var(--color-divider);
+  padding: 24px 20px;
+  background: var(--color-panel);
+}
+
+/* Zone blocks: as many as fit, never narrower than a legible card. */
+.wt-zones {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* Horizontally scrollable region for tables too wide to reflow.
+   `max-width: 100%` + `min-width: 0` are both required: without them the
+   intrinsic width of a wide table propagates up through the flex/grid
+   ancestors and pushes the whole page sideways instead of scrolling here. */
+.wt-scroll-x {
+  overflow-x: auto;
+  max-width: 100%;
+  min-width: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Top chrome. Brand and links stay put; the org name and status badge are the
+   first things to give up room as the bar narrows. */
+.wt-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--color-divider);
+  background: var(--color-panel);
+  flex-wrap: wrap;
+}
+.wt-nav-links {
+  margin-left: 16px;
+}
+.wt-nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 860px) {
+  .wt-nav {
+    gap: 12px;
+    padding: 11px 14px;
+  }
+  .wt-nav-links {
+    margin-left: 0;
+    /* Links come first on the wrapped line and stay reachable. */
+    order: 3;
+    width: 100%;
+    gap: 16px;
+  }
+  .wt-nav-right {
+    order: 2;
+  }
+  /* The org name is context, not navigation — it goes once space is tight. */
+  .wt-nav-org {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .wt-board {
+    padding: 24px 24px 60px;
+  }
+  .wt-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wt-rail {
+    border-left: 0;
+    border-top: 1px solid var(--color-divider);
+  }
+}
+
+@media (max-width: 860px) {
+  .wt-board {
+    padding: 16px 14px 48px;
+  }
+  .wt-zones {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  /* The board's 9.5px machine labels are legible at desk distance but not in
+     the hand. Raised to 11px on small screens; letter-spacing is trimmed so
+     they still fit on one line. */
+  .wt-kicker,
+  .wt [class*="wt-mono"] {
+    letter-spacing: 0.08em;
+  }
+  .wt-kicker,
+  .wt-status-line,
+  .wt-zone-label {
+    font-size: 11px;
+  }
+  /* Registration marks are drawn 6px outside the frame; at the screen edge
+     that would clip or force a horizontal scrollbar. */
+  .wt-corner {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .wt-board {
+    padding: 10px 8px 40px;
+  }
+  .wt-zones {
+    grid-template-columns: 1fr;
+  }
+
+  /* Wide data tables reflow into stacked cards. Each cell carries its column
+     name via data-label, so the header row can be dropped without losing
+     what a value means. */
+  .wt-table-cards,
+  .wt-table-cards thead,
+  .wt-table-cards tbody,
+  .wt-table-cards th,
+  .wt-table-cards td,
+  .wt-table-cards tr {
+    display: block;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+  .wt-table-cards thead {
+    position: absolute;
+    left: -9999px;
+  }
+  .wt-table-cards tr {
+    border: 1px solid var(--color-divider);
+    margin-bottom: 10px;
+    padding: 4px 2px;
+  }
+  .wt-table-cards td {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--color-hairline);
+    padding: 7px 10px;
+    text-align: right;
+  }
+  .wt-table-cards td:last-child {
+    border-bottom: 0;
+  }
+  .wt-table-cards td::before {
+    content: attr(data-label);
+    flex: none;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-faint);
+    text-align: left;
+  }
+  /* A cell with no label is a full-width action row. */
+  .wt-table-cards td[data-label=""]::before {
+    display: none;
+  }
+  .wt-table-cards td[data-label=""] {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  /* In table mode a 'use' row is marked by a red left rule. As a card that
+     rule would read as decoration, so the whole card takes the alert
+     treatment instead. */
+  .wt-table-cards tr.wt-row-use {
+    border-color: rgba(232, 70, 78, 0.55);
+    background: rgba(232, 70, 78, 0.07);
+    border-left-width: 2px;
   }
 }

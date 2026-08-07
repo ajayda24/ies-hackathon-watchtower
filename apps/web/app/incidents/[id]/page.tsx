@@ -93,15 +93,8 @@ export default function IncidentDetailPage({
   const contained = containment_actions.length > 0
 
   return (
-    <div className="wt" style={{ padding: "40px 44px 80px" }}>
-      <Blueprint
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          background: "var(--color-bg)",
-          boxShadow: "var(--shadow-lg)",
-        }}
-      >
+    <div className="wt wt-board">
+      <Blueprint className="wt-shell">
         <TopNav active="incidents" orgName={ORG_NAME} />
 
         <div
@@ -119,7 +112,7 @@ export default function IncidentDetailPage({
               flexWrap: "wrap",
             }}
           >
-            <div style={{ flex: 1, minWidth: 320 }}>
+            <div style={{ flex: "1 1 300px", minWidth: 0 }}>
               <div
                 style={{
                   display: "flex",
@@ -159,7 +152,12 @@ export default function IncidentDetailPage({
                 </span>
               </div>
 
-              <h3 style={{ margin: "0 0 8px", fontSize: 30 }}>
+              <h3
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: "clamp(21px, 3.4vw, 30px)",
+                }}
+              >
                 Decoy credential used against {department?.name ?? "a department"}
               </h3>
 
@@ -211,13 +209,9 @@ export default function IncidentDetailPage({
           </div>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1fr) 430px",
-            gap: 0,
-          }}
-        >
+        {/* The evidence sidebar is wider than the map's rail — it carries the
+            narrative and containment log, not just stats. */}
+        <div className="wt-split" style={{ ["--rail" as string]: "430px" }}>
           <div style={{ padding: "24px 26px", minWidth: 0 }}>
             <Kicker style={{ marginBottom: 20 }}>
               CORRELATED EVENTS · {events.length}
@@ -246,13 +240,7 @@ export default function IncidentDetailPage({
             </div>
           </div>
 
-          <div
-            style={{
-              borderLeft: "1px solid var(--color-divider)",
-              padding: "24px 22px",
-              background: "var(--color-panel)",
-            }}
-          >
+          <div className="wt-rail">
             <Blueprint
               cornerColor="var(--color-accent)"
               style={{

@@ -49,15 +49,8 @@ export default function TelemetryPage() {
   }
 
   return (
-    <div className="wt" style={{ padding: "40px 44px 80px" }}>
-      <Blueprint
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          background: "var(--color-bg)",
-          boxShadow: "var(--shadow-lg)",
-        }}
-      >
+    <div className="wt wt-board">
+      <Blueprint className="wt-shell">
         <TopNav
           active="telemetry"
           orgName={ORG_NAME}
@@ -119,8 +112,11 @@ export default function TelemetryPage() {
           </span>
         </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table className="wt-table" style={{ minWidth: 900 }}>
+        <div className="wt-scroll-x">
+          <table
+            className="wt-table wt-table-cards"
+            style={{ minWidth: 900 }}
+          >
             <thead>
               <tr>
                 <th style={{ width: 132 }}>Timestamp</th>
@@ -145,6 +141,7 @@ export default function TelemetryPage() {
                 <tr>
                   <td
                     colSpan={6}
+                    data-label=""
                     className="wt-mono"
                     style={{
                       padding: "28px 8px",
@@ -195,17 +192,20 @@ function EventRow({
 
   return (
     <tr
-      className={fresh ? "wt-row-in" : undefined}
+      className={`${fresh ? "wt-row-in" : ""} ${isUse ? "wt-row-use" : ""}`.trim()}
       style={isUse ? { borderLeft: "2px solid var(--crit)" } : undefined}
     >
       <td
+        data-label="Time"
         className="wt-mono"
         style={{ fontSize: 12, color: isUse ? "var(--color-text)" : "#c8d3de" }}
       >
         {clockTimeMs(event.timestamp)}
       </td>
-      <td style={{ fontSize: 13 }}>{deptName}</td>
-      <td>
+      <td data-label="Department" style={{ fontSize: 13 }}>
+        {deptName}
+      </td>
+      <td data-label="Event">
         {isUse ? (
           <span
             className="wt-mono"
@@ -240,15 +240,20 @@ function EventRow({
         )}
       </td>
       <td
+        data-label="Decoy"
         className="wt-mono"
         style={{ fontSize: 12, color: isUse ? "var(--crit-text)" : "#c8d3de" }}
       >
         {token?.name ?? "—"}
       </td>
-      <td className="wt-mono" style={{ fontSize: 12, color: "var(--color-dim)" }}>
+      <td
+        data-label="Source"
+        className="wt-mono"
+        style={{ fontSize: 12, color: "var(--color-dim)" }}
+      >
         {event.source_ip}
       </td>
-      <td>
+      <td data-label="MITRE">
         <Tag
           bg={isUse ? "rgba(232,70,78,.14)" : "rgba(143,182,220,.12)"}
           color={isUse ? "var(--crit-text)" : "var(--color-accent-bright)"}

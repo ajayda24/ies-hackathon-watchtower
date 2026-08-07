@@ -14,15 +14,8 @@ export default function IncidentsPage() {
     departments.find((d) => d.id === id)?.name ?? "—"
 
   return (
-    <div className="wt" style={{ padding: "40px 44px 80px" }}>
-      <Blueprint
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          background: "var(--color-bg)",
-          boxShadow: "var(--shadow-lg)",
-        }}
-      >
+    <div className="wt wt-board">
+      <Blueprint className="wt-shell">
         <TopNav
           active="incidents"
           orgName={ORG_NAME}
@@ -59,8 +52,11 @@ export default function IncidentsPage() {
             triage away as a false positive.
           </p>
 
-          <div style={{ overflowX: "auto" }}>
-            <table className="wt-table" style={{ minWidth: 820 }}>
+          <div className="wt-scroll-x">
+            <table
+              className="wt-table wt-table-cards"
+              style={{ minWidth: 820 }}
+            >
               <thead>
                 <tr>
                   <th style={{ width: 120 }}>Opened</th>
@@ -76,24 +72,30 @@ export default function IncidentsPage() {
                   const theme = severityTheme(incident.severity)
                   return (
                     <tr key={incident.id}>
-                      <td className="wt-mono" style={{ fontSize: 12 }}>
+                      <td
+                        data-label="Opened"
+                        className="wt-mono"
+                        style={{ fontSize: 12 }}
+                      >
                         {clockTime(incident.created_at)}
                       </td>
-                      <td>
+                      <td data-label="Severity">
                         <Tag bg={theme.bg} color={theme.color}>
                           {incident.severity.toUpperCase()}
                         </Tag>
                       </td>
-                      <td style={{ fontSize: 13 }}>
+                      <td data-label="Department" style={{ fontSize: 13 }}>
                         {deptName(incident.department_id)}
                       </td>
                       <td
+                        data-label="Source"
                         className="wt-mono"
                         style={{ fontSize: 12, color: "var(--color-dim)" }}
                       >
                         {incident.source_ip}
                       </td>
                       <td
+                        data-label="Status"
                         className="wt-mono"
                         style={{
                           fontSize: 11,
@@ -106,7 +108,7 @@ export default function IncidentsPage() {
                       >
                         {incident.status.toUpperCase()}
                       </td>
-                      <td>
+                      <td data-label="">
                         <a
                           href={`/incidents/${incident.id}`}
                           className="wt-mono"
@@ -122,6 +124,7 @@ export default function IncidentsPage() {
                   <tr>
                     <td
                       colSpan={6}
+                      data-label=""
                       className="wt-mono"
                       style={{
                         padding: "28px 8px",
