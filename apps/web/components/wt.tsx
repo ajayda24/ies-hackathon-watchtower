@@ -201,19 +201,6 @@ export function TopNav({
   )
 }
 
-/**
- * Renders a timestamp as UTC clock time.
- *
- * Formatting is pinned to UTC rather than the viewer's locale so the server
- * and client agree — a locale-dependent string would hydrate mismatched.
- */
-export function clockTime(iso: string): string {
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`
-}
-
-export function clockTimeMs(iso: string): string {
-  const d = new Date(iso)
-  return `${clockTime(iso)}.${String(d.getUTCMilliseconds()).padStart(3, "0")}`
-}
+// Re-exported so screens keep importing clock helpers from one place, while
+// server routes can pull the same implementation from @/lib/time directly.
+export { clockTimeUtc as clockTime, clockTimeMsUtc as clockTimeMs } from "@/lib/time"
