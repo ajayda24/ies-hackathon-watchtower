@@ -80,7 +80,7 @@ export default function DecoyLoginPage() {
               cursor: "pointer",
             }}
           >
-            Sign in
+            Log in
           </button>
         </form>
 
