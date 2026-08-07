@@ -78,12 +78,17 @@ export interface Incident {
   department_id: string
   source_ip: string
   severity: Severity
-  attribution_profile: string
-  attribution_confidence: number
-  attribution_narrative: string
   status: IncidentStatus
   created_at: string
   updated_at: string
+  /*
+   * No attribution fields by design. Earlier drafts carried a profile, a
+   * confidence score and a stored narrative; all three were written once at
+   * creation and never computed, which is worse than absent — a reader would
+   * reasonably assume something scored them. What the evidence supports is a
+   * source address and an ordered sequence of actions, so that is all the
+   * record holds. The plain-English summary is derived on read.
+   */
 }
 
 export interface IncidentEvent {

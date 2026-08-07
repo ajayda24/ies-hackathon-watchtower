@@ -100,9 +100,6 @@ export function recordTrigger(params: {
       department_id: token.department_id,
       source_ip: sourceIp,
       severity,
-      attribution_profile: "Unclassified",
-      attribution_confidence: 0,
-      attribution_narrative: "",
       status: "open",
     })
   }

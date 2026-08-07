@@ -23,16 +23,15 @@ const LIVE: Item[] = [
   { label: "Incident correlation with a severity ladder" },
   { label: "Scoped automated containment" },
   { label: "MITRE ATT&CK mapping on every event" },
+  { label: "Department self-registration", detail: "plants starter decoys on sign-up" },
+  { label: "AI incident report", detail: "written from stored facts, print-ready" },
 ]
 
 const SIMPLIFIED: Item[] = [
   {
-    label: "Attribution",
-    detail: "rule-based scoring, not a trained model — explainable by design",
-  },
-  {
-    label: "Attribution narrative",
-    detail: "derived from event data; an LLM writes it when a key is configured",
+    label: "Incident summary",
+    detail:
+      "rule-derived from the event chain; an LLM rewrites it on request",
   },
   {
     label: "Containment",
@@ -47,9 +46,17 @@ const SIMPLIFIED: Item[] = [
     detail: "in-memory for the demo; Postgres schema written and ready",
   },
   { label: "Multi-tenancy", detail: "one organisation per instance" },
+  {
+    label: "Dashboard access",
+    detail: "no operator authentication — a deliberate 24-hour omission",
+  },
 ]
 
 const ROADMAP: Item[] = [
+  {
+    label: "Attacker profiling",
+    detail: "we classify the action, not the actor — the evidence cannot name one",
+  },
   { label: "Cloud decoys (M365, Google Workspace)" },
   { label: "Real SIEM/SOAR ingestion", detail: "payload shape only, unvalidated" },
   { label: "Behavioural analytics beyond thresholds" },
