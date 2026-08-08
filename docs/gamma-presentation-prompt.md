@@ -177,8 +177,9 @@ Proof-of-work figures, presented as stat tiles:
 
 What is verified working, as a checklist:
 - Department registration plants AI decoys in about 1.6 seconds
-- Decoy use opens an incident and fires containment in under 1 millisecond,
-  measured per incident and displayed in the interface
+- Decoy use opens an incident and fires containment automatically, with the
+  elapsed time measured per incident and displayed in the interface rather
+  than asserted
 - SIEM forwarding delivers to a live HTTP receiver — 200 OK, valid JSON, all
   five ECS fields an indexer keys on
 - Incident reports generate in 2 to 3 seconds

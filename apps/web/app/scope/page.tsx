@@ -1,13 +1,22 @@
 import { Blueprint, Kicker, TopNav } from "@/components/wt"
 import { ORG_NAME } from "@/lib/org"
+import { storageDegraded, storageMode } from "@/lib/store"
+
+export const dynamic = "force-dynamic"
 
 /**
  * Screen 07 — Architecture & Scope.
  *
- * Static by design: this is the claim the rest of the product has to live up
- * to, so it is written once and read out loud rather than computed. Every
- * capability carries one of three tiers, and the tiers are stated plainly —
- * a deception platform that overstates itself is the one thing it cannot be.
+ * The tier lists are static by design: this is the claim the rest of the
+ * product has to live up to, so it is written once and read out loud rather
+ * than computed. Every capability carries one of three tiers, and the tiers
+ * are stated plainly — a deception platform that overstates itself is the one
+ * thing it cannot be.
+ *
+ * Storage is the exception, and it has to be. Whether data is persisted is a
+ * runtime fact that changes with configuration, and a static line claiming
+ * persistence on a deployment running from memory would be exactly the kind of
+ * overstatement this page exists to prevent. So it is read live.
  */
 
 interface Item {
@@ -27,7 +36,8 @@ const LIVE: Item[] = [
   { label: "AI incident report", detail: "written from stored facts, print-ready" },
   {
     label: "Measured containment latency",
-    detail: "timed per incident, not an estimate — typically under 1ms",
+    detail:
+      "timed per incident, not an estimate — includes every storage round-trip",
   },
 ]
 
@@ -45,10 +55,7 @@ const SIMPLIFIED: Item[] = [
     label: "Decoy placement",
     detail: "recorded as a path; no agent writes to a real host",
   },
-  {
-    label: "Storage",
-    detail: "in-memory for the demo; Postgres schema written and ready",
-  },
+  // Storage is injected at render time by storageItem() — see the note above.
   { label: "Multi-tenancy", detail: "one organisation per instance" },
   {
     label: "Dashboard access",
@@ -71,7 +78,38 @@ const ROADMAP: Item[] = [
   { label: "Auto-learned allowlisting for internal automation" },
 ]
 
+/**
+ * Reports where data is actually living right now.
+ *
+ * Three states, because "degraded" is not the same as "not configured": a
+ * deployment that was meant to persist and silently stopped is the one a
+ * reader most needs told about.
+ */
+function storageItem(): Item {
+  if (storageDegraded()) {
+    return {
+      label: "Storage",
+      detail:
+        "Supabase configured but unreachable — running from memory, data will not survive a restart",
+    }
+  }
+  if (storageMode() === "supabase") {
+    return {
+      label: "Storage",
+      detail: "Supabase Postgres — incidents and decoys persist across restarts",
+    }
+  }
+  return {
+    label: "Storage",
+    detail:
+      "in-memory for this instance; set SUPABASE_URL to persist. Schema written and ready",
+  }
+}
+
 export default function ScopePage() {
+  // Storage sits with the other shortcuts, reported as it actually is.
+  const simplified = [...SIMPLIFIED, storageItem()]
+
   return (
     <div className="wt wt-board">
       <Blueprint className="wt-shell">
@@ -121,10 +159,10 @@ export default function ScopePage() {
             />
             <TierCard
               tier="SIMPLIFIED"
-              count={SIMPLIFIED.length}
+              count={simplified.length}
               title="Works, with a shortcut"
               blurb="Real logic, reduced surface. Each one names its shortcut."
-              items={SIMPLIFIED}
+              items={simplified}
               color="var(--warn)"
               border="rgba(229,166,60,.45)"
               bg="rgba(229,166,60,.04)"
