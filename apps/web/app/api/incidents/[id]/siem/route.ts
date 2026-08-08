@@ -33,21 +33,28 @@ export async function POST(
 }
 
 async function build(ctx: RouteContext<"/api/incidents/[id]/siem">) {
-  ensureSeeded()
+  await ensureSeeded()
   const { id } = await ctx.params
-  const incident = listIncidents().find((i) => i.id === id)
+  const incidents = await listIncidents()
+  const incident = incidents.find((i) => i.id === id)
   if (!incident) {
     return {
       error: Response.json({ error: "Incident not found" }, { status: 404 }),
     } as const
   }
 
+  const [department, events, actions] = await Promise.all([
+    getDepartment(incident.department_id),
+    listIncidentEvents(incident.id),
+    listContainmentActions(incident.id),
+  ])
+
   return {
     payload: buildSiemPayload({
       incident,
-      department: getDepartment(incident.department_id),
-      events: listIncidentEvents(incident.id),
-      actions: listContainmentActions(incident.id),
+      department,
+      events,
+      actions,
       organizationName: ORG_NAME,
     }),
   } as const

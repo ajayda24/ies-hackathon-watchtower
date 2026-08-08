@@ -58,12 +58,12 @@ export interface TriggerResult {
  * content was actually submitted somewhere — run correlation, escalate
  * severity, and can fire containment.
  */
-export function recordTrigger(params: {
+export async function recordTrigger(params: {
   token: Honeytoken
   eventType: EventType
   sourceIp: string
   details?: Record<string, unknown>
-}): TriggerResult {
+}): Promise<TriggerResult> {
   const { token, eventType, sourceIp, details = {} } = params
   const technique = classify(token.type, eventType)
 
@@ -71,13 +71,17 @@ export function recordTrigger(params: {
   // measurement covers the platform's own work — classification, correlation,
   // containment — and not just the final call.
   //
-  // performance.now(), not Date.now(): the whole path completes well inside a
-  // millisecond, so a millisecond-resolution clock reports 0 and the number
-  // reads as broken rather than fast. Sub-millisecond precision is the honest
-  // way to report work this short.
+  // This includes storage round-trips, which is the honest thing to measure:
+  // against Postgres it reports single-digit to low-double-digit milliseconds,
+  // against the in-memory store a fraction of one. Both are the real
+  // trigger-to-containment time for that configuration.
+  //
+  // performance.now(), not Date.now(): on the memory path the whole sequence
+  // completes inside a millisecond, and a millisecond-resolution clock reports
+  // 0, which reads as broken rather than fast.
   const detectionStart = performance.now()
 
-  const event = createEvent({
+  const event = await createEvent({
     token_id: token.id,
     department_id: token.department_id,
     event_type: eventType,
@@ -91,7 +95,7 @@ export function recordTrigger(params: {
   // a backup job reading every file on a share produces these all day and no
   // one gets paged.
   if (eventType === "access") {
-    recomputeSecurityLevel(token.department_id)
+    await recomputeSecurityLevel(token.department_id)
     return {
       event,
       incident: null,
@@ -102,14 +106,14 @@ export function recordTrigger(params: {
   }
 
   // --- 'use': decoy content was actually used. Hard signal. ---
-  const recentUseCount = countRecentUseEvents(sourceIp, USE_WINDOW_MS)
+  const recentUseCount = await countRecentUseEvents(sourceIp, USE_WINDOW_MS)
   const severity = severityFor(recentUseCount)
 
-  let incident = findOpenIncident(sourceIp, token.department_id)
+  let incident = await findOpenIncident(sourceIp, token.department_id)
   if (incident) {
-    incident = updateIncident(incident.id, { severity })!
+    incident = (await updateIncident(incident.id, { severity }))!
   } else {
-    incident = createIncident({
+    incident = await createIncident({
       department_id: token.department_id,
       source_ip: sourceIp,
       severity,
@@ -117,26 +121,26 @@ export function recordTrigger(params: {
     })
   }
 
-  attachEventToIncident(incident.id, event.id)
-  markHoneytokenTriggered(token.id)
+  await attachEventToIncident(incident.id, event.id)
+  await markHoneytokenTriggered(token.id)
 
   let contained = false
   let latencyMs: number | null = null
   if (severity === "high" || severity === "critical") {
-    triggerContainment(incident, token)
+    await triggerContainment(incident, token)
     contained = true
     // Stamped after containment completes, so the number covers the whole
     // path from trigger to response rather than detection alone. Rounded to
     // three decimals — beyond that the digits are timer noise, not signal.
     latencyMs = Math.round((performance.now() - detectionStart) * 1000) / 1000
     incident =
-      updateIncident(incident.id, {
+      (await updateIncident(incident.id, {
         status: "contained",
         containment_latency_ms: latencyMs,
-      }) ?? incident
+      })) ?? incident
   }
 
-  recomputeSecurityLevel(token.department_id)
+  await recomputeSecurityLevel(token.department_id)
   return { event, incident, contained, suppressed: false, latencyMs }
 }
 
@@ -154,17 +158,23 @@ export function severityFor(recentUseCount: number): Severity {
  * so a wrong block could take a whole clinic offline. Revoking the specific
  * fake credential is safe by construction — no real system depends on it.
  */
-export function triggerContainment(incident: Incident, token: Honeytoken): void {
-  markHoneytokenTriggered(token.id)
+export async function triggerContainment(
+  incident: Incident,
+  token: Honeytoken
+): Promise<void> {
+  await markHoneytokenTriggered(token.id)
 
-  createContainmentAction({
+  // Sequential, not Promise.all: the revocation is the containment, and the
+  // escalation announces it. If the revocation fails there is nothing to
+  // announce, so the second write must not already be in flight.
+  await createContainmentAction({
     incident_id: incident.id,
     action: "CREDENTIAL_REVOKED",
     automated: true,
     details: `Revoked honeytoken "${token.name}" (${token.tracking_id}) after ${incident.severity} severity use from ${incident.source_ip}.`,
   })
 
-  createContainmentAction({
+  await createContainmentAction({
     incident_id: incident.id,
     action: "ALERT_ESCALATED",
     automated: true,
@@ -176,13 +186,22 @@ export function triggerContainment(incident: Incident, token: Honeytoken): void 
  * Recomputes a department's badge from its current incidents and recent
  * triggers. Called after every event so the org map reflects live state.
  */
-export function recomputeSecurityLevel(departmentId: string): SecurityLevel {
+export async function recomputeSecurityLevel(
+  departmentId: string
+): Promise<SecurityLevel> {
   // "Contained" is not "resolved" — the credential was revoked, but an attacker
   // demonstrably used it and nobody has reviewed the blast radius yet. Counting
   // only open incidents would flip a department back to green the instant
   // containment fired, hiding the very incident we just caught. A human closes
   // the incident to clear the badge.
-  const active = listIncidents(departmentId).filter((i) => i.status !== "closed")
+  //
+  // Both reads are independent, so they run concurrently — this sits on the
+  // trigger path, where every avoidable round-trip is added latency.
+  const [incidents, events] = await Promise.all([
+    listIncidents(departmentId),
+    listEvents(1000),
+  ])
+  const active = incidents.filter((i) => i.status !== "closed")
 
   let level: SecurityLevel = "secure"
 
@@ -190,7 +209,7 @@ export function recomputeSecurityLevel(departmentId: string): SecurityLevel {
     level = "critical"
   } else {
     const cutoff = Date.now() - SECURITY_WINDOW_MS
-    const recentTriggers = listEvents(1000).filter(
+    const recentTriggers = events.filter(
       (e) =>
         e.department_id === departmentId &&
         new Date(e.timestamp).getTime() >= cutoff
@@ -201,6 +220,6 @@ export function recomputeSecurityLevel(departmentId: string): SecurityLevel {
     }
   }
 
-  setSecurityLevel(departmentId, level)
+  await setSecurityLevel(departmentId, level)
   return level
 }

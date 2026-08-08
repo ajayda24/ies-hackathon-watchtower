@@ -21,16 +21,16 @@ import type { HoneytokenType } from "@/lib/types"
 const STARTER_TYPES: HoneytokenType[] = ["credential", "document"]
 
 export async function GET() {
-  ensureSeeded()
+  await ensureSeeded()
   return Response.json(
-    { departments: listDepartments() },
+    { departments: await listDepartments() },
     { headers: { "cache-control": "no-store" } }
   )
 }
 
 /** Registers a department and plants its starter decoys. */
 export async function POST(req: NextRequest) {
-  ensureSeeded()
+  await ensureSeeded()
 
   const body = (await req.json().catch(() => ({}))) as { name?: string }
   const name = body.name?.trim()
@@ -43,7 +43,8 @@ export async function POST(req: NextRequest) {
   }
 
   const token = slugify(name)
-  const existing = listDepartments().find(
+  const departments = await listDepartments()
+  const existing = departments.find(
     (d) => d.registration_token === token || d.name.toLowerCase() === name.toLowerCase()
   )
   if (existing) {
@@ -53,7 +54,24 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const department = createDepartment(name, token)
+  // The check above is a read followed by a write, so two simultaneous
+  // registrations can both pass it. The unique constraint on
+  // registration_token is the actual guard; this turns the resulting insert
+  // error back into the same 409 rather than a 500.
+  let department
+  try {
+    department = await createDepartment(name, token)
+  } catch {
+    const after = await listDepartments()
+    const winner = after.find((d) => d.registration_token === token)
+    return Response.json(
+      {
+        error: `${winner?.name ?? name} is already registered`,
+        department: winner ?? null,
+      },
+      { status: 409 }
+    )
+  }
 
   // Generated in parallel — two sequential model calls would put ~3s of dead
   // air in the middle of the onboarding screen.
@@ -68,16 +86,18 @@ export async function POST(req: NextRequest) {
     )
   )
 
-  const planted = drafts.map((draft, i) =>
-    createHoneytoken({
-      department_id: department.id,
-      type: STARTER_TYPES[i]!,
-      name: draft.name,
-      content: draft.content,
-      location: draft.location,
-      tracking_id: newTrackingId(),
-      ai_generated: draft.source === "ai",
-    })
+  const planted = await Promise.all(
+    drafts.map((draft, i) =>
+      createHoneytoken({
+        department_id: department.id,
+        type: STARTER_TYPES[i]!,
+        name: draft.name,
+        content: draft.content,
+        location: draft.location,
+        tracking_id: newTrackingId(),
+        ai_generated: draft.source === "ai",
+      })
+    )
   )
 
   return Response.json(

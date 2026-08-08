@@ -25,21 +25,29 @@ export async function GET(
   req: NextRequest,
   ctx: RouteContext<"/api/track/[trackingId]">
 ) {
-  ensureSeeded()
   const { trackingId } = await ctx.params
-  const token = getHoneytokenByTrackingId(trackingId)
 
-  if (token) {
-    recordTrigger({
-      token,
-      eventType: "access",
-      sourceIp: clientIp(req),
-      details: {
-        user_agent: req.headers.get("user-agent") ?? "unknown",
-        referer: req.headers.get("referer") ?? null,
-        vector: "document_tracking_pixel",
-      },
-    })
+  // Logging must never decide whether the pixel is served. A storage error
+  // that escaped this block would return a 500, and a broken image where a
+  // document expects one tells the attacker this file is instrumented — the
+  // one thing the decoy cannot afford to reveal. Fail silently, serve the GIF.
+  try {
+    await ensureSeeded()
+    const token = await getHoneytokenByTrackingId(trackingId)
+    if (token) {
+      await recordTrigger({
+        token,
+        eventType: "access",
+        sourceIp: clientIp(req),
+        details: {
+          user_agent: req.headers.get("user-agent") ?? "unknown",
+          referer: req.headers.get("referer") ?? null,
+          vector: "document_tracking_pixel",
+        },
+      })
+    }
+  } catch (err) {
+    console.error("[track] failed to record access event", err)
   }
 
   return new Response(new Uint8Array(PIXEL), {

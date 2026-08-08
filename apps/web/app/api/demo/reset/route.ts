@@ -31,23 +31,34 @@ export async function POST(_req: NextRequest) {
     )
   }
 
+  const [departments, honeytokens, events, incidents] = await Promise.all([
+    listDepartments(),
+    listHoneytokens(),
+    listEvents(10_000),
+    listIncidents(),
+  ])
   const before = {
-    departments: listDepartments().length,
-    honeytokens: listHoneytokens().length,
-    events: listEvents(10_000).length,
-    incidents: listIncidents().length,
+    departments: departments.length,
+    honeytokens: honeytokens.length,
+    events: events.length,
+    incidents: incidents.length,
   }
 
-  resetStore()
-  ensureSeeded()
+  await resetStore()
+  await ensureSeeded()
+
+  const [seededDepts, seededTokens] = await Promise.all([
+    listDepartments(),
+    listHoneytokens(),
+  ])
 
   return Response.json(
     {
       ok: true,
       cleared: before,
       seeded: {
-        departments: listDepartments().length,
-        honeytokens: listHoneytokens().length,
+        departments: seededDepts.length,
+        honeytokens: seededTokens.length,
       },
     },
     { headers: { "cache-control": "no-store" } }
