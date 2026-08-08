@@ -20,5 +20,7 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  // Tests carry their own config: they run under Node's TypeScript stripping,
+  // which needs explicit .ts extensions that this config rejects.
+  "exclude": ["node_modules", "tests"]
 }

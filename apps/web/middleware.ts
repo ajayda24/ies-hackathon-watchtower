@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 
+import { checkRateLimit, ruleFor } from "@/lib/rate-limit"
+
 /**
  * Gates the operator console behind a passphrase.
  *
@@ -40,6 +42,20 @@ function isPublic(pathname: string): boolean {
   )
 }
 
+/**
+ * Rate-limit key: the real network source.
+ *
+ * Deliberately NOT lib/request.ts's clientIp(), which honours a `?ip=` query
+ * parameter so a rehearsed demo can present distinct attacker addresses. A
+ * limiter keyed on a value the caller controls is not a limiter — a flooder
+ * would vary the parameter and get a fresh bucket per request.
+ */
+function rateKey(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for")
+  if (forwarded) return forwarded.split(",")[0]!.trim()
+  return req.headers.get("x-real-ip") ?? "local"
+}
+
 async function verify(value: string | undefined, secret: string) {
   if (!value) return false
   const [expiryRaw, mac] = value.split(".")
@@ -75,12 +91,32 @@ async function verify(value: string | undefined, secret: string) {
 }
 
 export async function middleware(req: NextRequest) {
+  const { pathname, search } = req.nextUrl
+
+  // Rate limiting runs first and unconditionally. The endpoints worth flooding
+  // are the public ones, so gating this behind the auth check would leave the
+  // actual attack surface unprotected. Enforced here rather than in the route
+  // so a flood is answered at the edge, before a function starts or a database
+  // write is attempted.
+  const rule = ruleFor(pathname)
+  if (rule) {
+    const limited = checkRateLimit(`${rateKey(req)}:${pathname}`, rule)
+    if (!limited.ok) {
+      // 429 with no detail. These endpoints are attacker-facing, and a body
+      // explaining the limit would confirm the path is instrumented and hand
+      // over the threshold to pace around.
+      return new NextResponse(null, {
+        status: 429,
+        headers: { "retry-after": String(limited.retryAfter) },
+      })
+    }
+  }
+
   const secret = process.env.OPERATOR_PASSPHRASE
   // Unset means the console is open. The demo runs this way by default, and
   // /scope says so rather than leaving it to be discovered.
   if (!secret) return
 
-  const { pathname, search } = req.nextUrl
   if (isPublic(pathname)) return
 
   if (await verify(req.cookies.get(SESSION_COOKIE)?.value, secret)) {

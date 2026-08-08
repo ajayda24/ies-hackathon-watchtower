@@ -10,7 +10,7 @@ import {
   markHoneytokenTriggered,
   setSecurityLevel,
   updateIncident,
-} from "./store"
+} from "@/lib/store"
 import { classify } from "./mitre"
 import type {
   Event,

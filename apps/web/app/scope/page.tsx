@@ -43,6 +43,10 @@ const LIVE: Item[] = [
     detail:
       "tooling, tradecraft and cadence, each citing the event it was read from",
   },
+  {
+    label: "Edge rate limiting on the public surfaces",
+    detail: "per-source, enforced before a function runs or a row is written",
+  },
   { label: "Department self-registration", detail: "plants starter decoys on sign-up" },
   { label: "AI incident report", detail: "written from stored facts, print-ready" },
   {
@@ -73,6 +77,11 @@ const SIMPLIFIED: Item[] = [
   {
     label: "SIEM/SOAR forwarding",
     detail: "delivery verified against a live endpoint; field mapping unconfirmed",
+  },
+  {
+    label: "Rate-limit counters",
+    detail:
+      "per Edge instance, not shared — a speed bump against floods, not a quota",
   },
 ]
 
