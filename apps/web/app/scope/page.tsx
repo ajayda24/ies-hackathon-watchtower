@@ -38,6 +38,11 @@ const LIVE: Item[] = [
     detail:
       "valid credentials do not help — an insider has no reason to use a decoy",
   },
+  {
+    label: "Behavioural attacker profiling",
+    detail:
+      "tooling, tradecraft and cadence, each citing the event it was read from",
+  },
   { label: "Department self-registration", detail: "plants starter decoys on sign-up" },
   { label: "AI incident report", detail: "written from stored facts, print-ready" },
   {
@@ -73,8 +78,9 @@ const SIMPLIFIED: Item[] = [
 
 const ROADMAP: Item[] = [
   {
-    label: "Attacker profiling",
-    detail: "we classify the action, not the actor — the evidence cannot name one",
+    label: "Actor identification",
+    detail:
+      "naming a person, group or country — the evidence cannot support it, so we do not",
   },
   { label: "Cloud decoys (M365, Google Workspace)" },
   { label: "Behavioural analytics beyond thresholds" },

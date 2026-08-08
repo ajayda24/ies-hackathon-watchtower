@@ -284,7 +284,9 @@ Stated plainly, and visible in-product on `/scope`.
 **Absent:**
 - Cloud deception (M365, Google Workspace, AWS) — no code
 - Behavioural analytics — thresholds and a static allowlist, not analytics
-- Attack attribution — removed on purpose; see §4
+- Actor identification — naming a person, group or country. Removed on
+  purpose; see §4. Behavioural profiling (how the source operated) is built
+  and live; identity is not, because the evidence cannot carry it.
 - Persistent storage — schema ready, not wired
 - Operator authentication on the dashboard
 - Real agent-based decoy placement (a path is recorded; nothing writes to a
@@ -302,7 +304,7 @@ Stated plainly, and visible in-product on `/scope`.
 |---|---|
 | **Detection speed** | Measured per incident and displayed, storage round-trips included |
 | **False positives** | Structural — access/use split, not tuning |
-| **Threat attribution** | Action attributed (MITRE, source, sequence); actor deliberately not |
+| **Threat attribution** | Action and behaviour attributed (MITRE, tooling, tradecraft, cadence); actor deliberately not |
 | **Automation quality** | Scoped by design, with the reasoning written down |
 | **Explainability** | Every tag and severity traces to one readable line |
 | **Scalability** | Store abstracted behind one module; Postgres schema ready |
