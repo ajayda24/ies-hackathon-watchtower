@@ -572,7 +572,17 @@ function narrative(
       : "No legitimate process submits a decoy credential, which is why this opened an incident where a file read would not have."
   }`
 
-  return [first[0]!, second]
+  // The insider case, stated where the question actually arises. Tools that
+  // detect intrusion by credential validity or behavioural baseline cannot see
+  // an insider: their credentials are genuine and their behaviour is normal
+  // for them. A decoy sidesteps that entirely — it is not evidence about who
+  // someone is, only that they used something no legitimate role has a reason
+  // to touch. Worth saying plainly, because "was this an outsider?" is the
+  // first thing anyone reading this will ask.
+  const third =
+    "This detection does not depend on the account being stolen. An insider with entirely valid credentials still has no legitimate reason to use a decoy, so the same signal holds either way — what it identifies is the action, not the person."
+
+  return [first[0]!, second, third]
 }
 
 function actionLabel(action: ContainmentActionRecord): string {

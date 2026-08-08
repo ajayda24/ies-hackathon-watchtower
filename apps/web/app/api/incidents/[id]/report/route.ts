@@ -80,6 +80,7 @@ Facts you may rely on:
 - Opening a decoy file is weak evidence — a backup job or search indexer produces the same event. Submitting a decoy's contents to a login form is strong evidence, because no legitimate process does that.
 - Containment here means the decoy credential was revoked and an alert raised. The platform deliberately does not block network addresses, because this organisation's systems share outbound addresses and a wrong block would take real services offline.
 - The evidence identifies a source address and a sequence of actions. It does not identify a person, an organisation, or a country.
+- This detection does not depend on the account being stolen or the intruder being external. Someone inside the organisation, holding entirely valid credentials, still has no legitimate reason to use a decoy — so the signal is the same whether the source is an outsider, a compromised host, or an insider. Do not assert which of those it was; the evidence cannot distinguish them.
 
 Write the report.`
 
