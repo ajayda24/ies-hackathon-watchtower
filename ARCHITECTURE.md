@@ -115,7 +115,11 @@ The product logic, in one file:
   escalates the existing incident rather than fragmenting into many.
 - **Containment threshold** — fires at `high` and above.
 - **Latency** — `performance.now()` around the whole path. Measured, not
-  estimated; typically **under 1ms** against the in-memory store.
+  estimated, and it includes every storage round-trip: **under 1ms** against
+  the in-memory store, **one to three seconds** against a remote Supabase
+  region. Both are the real trigger-to-containment time for that
+  configuration — the number moves with deployment, so quote the one on screen
+  rather than a remembered figure.
 - **Automation allowlist** — a static set of source IPs whose `access` events
   are marked suppressed. Note it only ever suppresses `access`; a `use` from an
   allowlisted source still escalates, because no backup job submits a password.
@@ -296,7 +300,7 @@ Stated plainly, and visible in-product on `/scope`.
 
 | Metric | Where it stands |
 |---|---|
-| **Detection speed** | Measured per incident, sub-millisecond, displayed |
+| **Detection speed** | Measured per incident and displayed, storage round-trips included |
 | **False positives** | Structural — access/use split, not tuning |
 | **Threat attribution** | Action attributed (MITRE, source, sequence); actor deliberately not |
 | **Automation quality** | Scoped by design, with the reasoning written down |
