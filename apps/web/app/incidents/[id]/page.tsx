@@ -11,6 +11,7 @@ import {
   severityTheme,
 } from "@/components/wt"
 import { useClock } from "@/components/use-clock"
+import { PROFILE_CAVEAT, type BehaviourProfile } from "@/lib/profile"
 import { formatLatency } from "@/lib/time"
 import { ORG_NAME } from "@/lib/org"
 import type {
@@ -27,6 +28,7 @@ interface Detail {
   events: Event[]
   honeytokens: Honeytoken[]
   containment_actions: ContainmentActionRecord[]
+  profile: BehaviourProfile
 }
 
 /**
@@ -368,6 +370,10 @@ export default function IncidentDetailPage({
               )}
             </Blueprint>
 
+            {detail.profile.traits.length > 0 && (
+              <ProfilePanel profile={detail.profile} />
+            )}
+
             <Kicker style={{ marginBottom: 14 }}>CONTAINMENT · AUTONOMOUS</Kicker>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -583,6 +589,83 @@ function narrative(
     "This detection does not depend on the account being stolen. An insider with entirely valid credentials still has no legitimate reason to use a decoy, so the same signal holds either way — what it identifies is the action, not the person."
 
   return [first[0]!, second, third]
+}
+
+/**
+ * Behavioural profile.
+ *
+ * The caveat is rendered inside this component, not beside it, so a future
+ * layout change cannot separate the traits from the statement that they are
+ * behaviour rather than identity. That separation is precisely how a careful
+ * feature turns into an overclaim.
+ */
+function ProfilePanel({ profile }: { profile: BehaviourProfile }) {
+  return (
+    <>
+      <Kicker style={{ marginBottom: 14 }}>
+        BEHAVIOURAL PROFILE · OBSERVED
+      </Kicker>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          marginBottom: 22,
+        }}
+      >
+        {profile.traits.map((trait) => (
+          <div key={trait.label}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 8,
+                marginBottom: 2,
+              }}
+            >
+              <span
+                className="wt-mono"
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: ".1em",
+                  color: "var(--color-faint)",
+                  border: "1px solid var(--color-divider)",
+                  padding: "1px 5px",
+                  flex: "none",
+                }}
+              >
+                {trait.kind.toUpperCase()}
+              </span>
+              <span style={{ fontSize: 14 }}>{trait.label}</span>
+            </div>
+            <div
+              style={{
+                fontSize: 12.5,
+                color: "var(--color-dim)",
+                lineHeight: 1.55,
+              }}
+            >
+              {trait.evidence}
+            </div>
+          </div>
+        ))}
+
+        <p
+          style={{
+            margin: 0,
+            paddingTop: 10,
+            borderTop: "1px solid var(--color-hairline)",
+            fontSize: 12,
+            color: "var(--color-faint)",
+            lineHeight: 1.6,
+          }}
+        >
+          {PROFILE_CAVEAT}
+        </p>
+      </div>
+    </>
+  )
 }
 
 function actionLabel(action: ContainmentActionRecord): string {

@@ -12,6 +12,7 @@ import { NextResponse, type NextRequest } from "next/server"
  *
  *   /portal/login   the fake login portal an attacker is meant to reach
  *   /share/*        decoy documents, likewise
+ *   /files          the network share an intruder browses to find them
  *   /api/decoy/*    the `use` detection surface
  *   /api/track/*    the `access` detection surface
  *
@@ -27,6 +28,7 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/portal",
   "/share",
+  "/files",
   "/api/decoy",
   "/api/track",
   "/api/auth",

@@ -2,11 +2,13 @@
 
 import { useState } from "react"
 
+import { AlertToggle } from "@/components/alert-toggle"
 import { Perimeter } from "@/components/perimeter"
 import { Blueprint, Kicker, LiveDot, TopNav } from "@/components/wt"
 import { useClock } from "@/components/use-clock"
 import { ZoneCard } from "@/components/zone-card"
 import { ORG_NAME } from "@/lib/org"
+import { useAlerts } from "@/lib/useAlerts"
 import { useOverview } from "@/lib/useOverview"
 
 /**
@@ -17,6 +19,8 @@ import { useOverview } from "@/lib/useOverview"
 export default function MapPage() {
   const { data, error } = useOverview()
   const clock = useClock()
+  // Sounds only on `use`. Access stays silent by design — see lib/alarm.ts.
+  useAlerts(data?.events, data?.incidents)
 
   const departments = data?.departments ?? []
   const events = data?.events ?? []
@@ -45,6 +49,7 @@ export default function MapPage() {
           orgName={ORG_NAME}
           right={
             <>
+              <AlertToggle />
               {criticalCount > 0 && (
                 <span
                   className="wt-mono"

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server"
 
 import { writeReport } from "@/lib/ai/generate-decoy"
+import { buildProfile } from "@/lib/profile"
 import { ORG_NAME } from "@/lib/org"
 import { ensureSeeded } from "@/lib/seed"
 import { clockTimeUtc } from "@/lib/time"
@@ -60,6 +61,15 @@ export async function POST(
 
   const span = incidentSpan(events)
 
+  // Behavioural traits, already derived from these same events. Passed as
+  // observations so the report can describe how the source operated without
+  // the model inferring anything the evidence does not carry.
+  const profile = buildProfile(events, tokens)
+  const behaviour =
+    profile.traits.length > 0
+      ? profile.traits.map((t) => `- ${t.label}: ${t.evidence}`).join("\n")
+      : "- Too few events to characterise behaviour."
+
   const prompt = `Organisation: ${ORG_NAME}
 Department affected: ${department?.name ?? "unknown"}
 Incident reference: ${incident.id}
@@ -74,6 +84,9 @@ ${timeline}
 
 Automated response:
 ${containment}
+
+Observed behaviour (read directly from the events above — describe these, do not extrapolate beyond them):
+${behaviour}
 
 Facts you may rely on:
 - Every item listed is a decoy planted by this platform. None grants access to any real system or record, so nothing real was reached.

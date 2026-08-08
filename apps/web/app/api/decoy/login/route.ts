@@ -68,6 +68,25 @@ export async function POST(req: NextRequest) {
   }
 
   // Uniform failure either way. The attacker must not learn they hit a decoy.
+  //
+  // A browser posting the portal's <form> is sent back to the portal with an
+  // error flag, exactly as a real sign-in failure would be; anything else gets
+  // the JSON. Returning JSON to the browser would dump a raw response body on
+  // screen, which no working portal does and which breaks the illusion at the
+  // exact moment the decoy is being used.
+  const wantsHtml =
+    !contentType.includes("application/json") &&
+    (req.headers.get("accept") ?? "").includes("text/html")
+
+  if (wantsHtml) {
+    const back = new URL("/portal/login", req.url)
+    back.searchParams.set("error", "1")
+    const ip = new URL(req.url).searchParams.get("ip")
+    if (ip) back.searchParams.set("ip", ip)
+    // 303: turns the POST into a GET so a refresh does not resubmit.
+    return Response.redirect(back, 303)
+  }
+
   return Response.json(
     { ok: false, error: "Invalid username or password." },
     { status: 401 }
