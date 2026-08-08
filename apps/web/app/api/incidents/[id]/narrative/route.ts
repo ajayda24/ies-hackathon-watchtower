@@ -24,18 +24,22 @@ export async function POST(
   _req: NextRequest,
   ctx: RouteContext<"/api/incidents/[id]/narrative">
 ) {
-  ensureSeeded()
+  await ensureSeeded()
   const { id } = await ctx.params
 
-  const incident = listIncidents().find((i) => i.id === id)
+  const incidents = await listIncidents()
+  const incident = incidents.find((i) => i.id === id)
   if (!incident) {
     return Response.json({ error: "Incident not found" }, { status: 404 })
   }
 
-  const department = getDepartment(incident.department_id)
-  const events = listIncidentEvents(incident.id)
-  const actions = listContainmentActions(incident.id)
-  const tokens = new Map(listHoneytokens().map((t) => [t.id, t]))
+  const [department, events, actions, allTokens] = await Promise.all([
+    getDepartment(incident.department_id),
+    listIncidentEvents(incident.id),
+    listContainmentActions(incident.id),
+    listHoneytokens(),
+  ])
+  const tokens = new Map(allTokens.map((t) => [t.id, t]))
 
   // The prompt carries only facts already in the store. Nothing is inferred
   // here, so the model has no room to invent a technique or a motive.

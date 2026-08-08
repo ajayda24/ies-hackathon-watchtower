@@ -14,24 +14,31 @@ export async function GET(
   _req: NextRequest,
   ctx: RouteContext<"/api/incidents/[id]">
 ) {
-  ensureSeeded()
+  await ensureSeeded()
   const { id } = await ctx.params
 
-  const incident = listIncidents().find((i) => i.id === id)
+  const incidents = await listIncidents()
+  const incident = incidents.find((i) => i.id === id)
   if (!incident) {
     return Response.json({ error: "Incident not found" }, { status: 404 })
   }
 
-  const events = listIncidentEvents(incident.id)
+  const events = await listIncidentEvents(incident.id)
   const tokenIds = new Set(events.map((e) => e.token_id))
+
+  const [department, honeytokens, containment_actions] = await Promise.all([
+    getDepartment(incident.department_id),
+    listHoneytokens(),
+    listContainmentActions(incident.id),
+  ])
 
   return Response.json(
     {
       incident,
-      department: getDepartment(incident.department_id) ?? null,
+      department: department ?? null,
       events,
-      honeytokens: listHoneytokens().filter((t) => tokenIds.has(t.id)),
-      containment_actions: listContainmentActions(incident.id),
+      honeytokens: honeytokens.filter((t) => tokenIds.has(t.id)),
+      containment_actions,
     },
     { headers: { "cache-control": "no-store" } }
   )

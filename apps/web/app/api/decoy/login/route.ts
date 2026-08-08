@@ -14,8 +14,11 @@ import type { Honeytoken } from "@/lib/types"
  * tried to authenticate with it. No legitimate process does that, so this
  * escalates immediately.
  */
-function matchCredential(username: string): Honeytoken | undefined {
-  return listHoneytokens().find((token) => {
+async function matchCredential(
+  username: string
+): Promise<Honeytoken | undefined> {
+  const tokens = await listHoneytokens()
+  return tokens.find((token) => {
     if (token.type !== "credential") return false
     const [user] = token.content.split("/").map((s) => s.trim())
     return user?.toLowerCase() === username.trim().toLowerCase()
@@ -23,8 +26,6 @@ function matchCredential(username: string): Honeytoken | undefined {
 }
 
 export async function POST(req: NextRequest) {
-  ensureSeeded()
-
   let username = ""
   let password = ""
 
@@ -40,22 +41,30 @@ export async function POST(req: NextRequest) {
     password = String(form?.get("password") ?? "")
   }
 
-  const token = matchCredential(username)
-
-  if (token) {
-    recordTrigger({
-      token,
-      eventType: "use",
-      sourceIp: clientIp(req),
-      details: {
-        submitted_username: username,
-        // Never store the submitted secret; length alone is enough to show
-        // whether the planted password was used verbatim.
-        submitted_password_length: password.length,
-        user_agent: req.headers.get("user-agent") ?? "unknown",
-        vector: "mock_login_portal",
-      },
-    })
+  // Wrapped for the same reason as the tracking pixel: the response below is
+  // what makes the portal indistinguishable from a real one, and a storage
+  // error escaping here would return a 500 for decoy credentials only —
+  // handing the attacker a way to tell planted accounts from unknown ones.
+  try {
+    await ensureSeeded()
+    const token = await matchCredential(username)
+    if (token) {
+      await recordTrigger({
+        token,
+        eventType: "use",
+        sourceIp: clientIp(req),
+        details: {
+          submitted_username: username,
+          // Never store the submitted secret; length alone is enough to show
+          // whether the planted password was used verbatim.
+          submitted_password_length: password.length,
+          user_agent: req.headers.get("user-agent") ?? "unknown",
+          vector: "mock_login_portal",
+        },
+      })
+    }
+  } catch (err) {
+    console.error("[decoy/login] failed to record use event", err)
   }
 
   // Uniform failure either way. The attacker must not learn they hit a decoy.

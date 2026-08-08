@@ -18,17 +18,17 @@ const VALID_TYPES: HoneytokenType[] = [
 
 /** Lists planted decoys, optionally scoped to one department. */
 export async function GET(req: NextRequest) {
-  ensureSeeded()
+  await ensureSeeded()
   const departmentId = new URL(req.url).searchParams.get("department_id")
   return Response.json(
-    { honeytokens: listHoneytokens(departmentId ?? undefined) },
+    { honeytokens: await listHoneytokens(departmentId ?? undefined) },
     { headers: { "cache-control": "no-store" } }
   )
 }
 
 /** Plants a decoy. Called with the content returned by /api/decoys/generate. */
 export async function POST(req: NextRequest) {
-  ensureSeeded()
+  await ensureSeeded()
 
   const body = (await req.json().catch(() => ({}))) as {
     department_id?: string
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   }
 
   const department = body.department_id
-    ? getDepartment(body.department_id)
+    ? await getDepartment(body.department_id)
     : undefined
   if (!department) {
     return Response.json({ error: "Unknown department" }, { status: 400 })
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     ? (body.type as HoneytokenType)
     : "credential"
 
-  const token = createHoneytoken({
+  const token = await createHoneytoken({
     department_id: department.id,
     type,
     name: body.name.trim(),

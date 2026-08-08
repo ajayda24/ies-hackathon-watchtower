@@ -1,9 +1,4 @@
-import {
-  createDepartment,
-  createHoneytoken,
-  db,
-  listDepartments,
-} from "./store"
+import { createDepartment, createHoneytoken, listDepartments } from "./store"
 import type { HoneytokenType } from "./types"
 
 /**
@@ -100,32 +95,46 @@ const SEED: Array<{ name: string; token: string; tokens: SeedToken[] }> = [
 ]
 
 /**
- * Idempotent — safe to call from any request path. Seeds only once per process
- * so the demo can be reset by restarting the dev server.
+ * Idempotent — safe to call from any request path.
+ *
+ * The guard is a storage read, not an in-process flag. Under serverless every
+ * request may run in a fresh container, so a per-process flag would let each
+ * cold start re-seed and duplicate every department; against a shared database
+ * the presence of rows is the only trustworthy signal.
+ *
+ * Concurrent cold starts can still race here. The unique constraint on
+ * `registration_token` is what actually settles it: the loser's insert fails,
+ * and since the winner has planted identical fixtures, swallowing that error
+ * leaves the board correct.
  */
-export function ensureSeeded(): void {
-  const store = db()
-  if (store.seeded || listDepartments().length > 0) {
-    store.seeded = true
-    return
-  }
+export async function ensureSeeded(): Promise<void> {
+  if ((await listDepartments()).length > 0) return
 
   for (const dept of SEED) {
-    const department = createDepartment(dept.name, dept.token)
+    let department
+    try {
+      department = await createDepartment(dept.name, dept.token)
+    } catch {
+      // Another container seeded this department first. Nothing to add.
+      continue
+    }
+
     for (const token of dept.tokens) {
-      createHoneytoken({
-        department_id: department.id,
-        type: token.type,
-        name: token.name,
-        content: token.content,
-        location: token.location,
-        // Deterministic tracking ids: the demo attacker flow needs a URL you can
-        // type, and a random uuid per restart would break rehearsed links.
-        tracking_id: `wt_${dept.token}_${token.type}`,
-        ai_generated: false,
-      })
+      try {
+        await createHoneytoken({
+          department_id: department.id,
+          type: token.type,
+          name: token.name,
+          content: token.content,
+          location: token.location,
+          // Deterministic tracking ids: the demo attacker flow needs a URL you
+          // can type, and a random uuid per restart would break rehearsed links.
+          tracking_id: `wt_${dept.token}_${token.type}`,
+          ai_generated: false,
+        })
+      } catch {
+        // Same race, one level down — tracking_id is unique too.
+      }
     }
   }
-
-  store.seeded = true
 }

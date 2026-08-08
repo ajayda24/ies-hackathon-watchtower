@@ -21,7 +21,7 @@ const VALID_TYPES: HoneytokenType[] = [
  * anything is committed.
  */
 export async function POST(req: NextRequest) {
-  ensureSeeded()
+  await ensureSeeded()
 
   const body = (await req.json().catch(() => ({}))) as {
     department_id?: string
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   const department = body.department_id
-    ? getDepartment(body.department_id)
+    ? await getDepartment(body.department_id)
     : undefined
   if (!department) {
     return Response.json({ error: "Unknown department" }, { status: 400 })
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   // Rotates the fallback pool so repeated generations during a demo don't
   // return identical bait.
-  const seed = listHoneytokens(department.id).length
+  const seed = (await listHoneytokens(department.id)).length
 
   const result = await generateDecoy({
     type,

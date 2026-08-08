@@ -53,6 +53,11 @@ create table if not exists incidents (
                            check (severity in ('low','medium','high','critical')),
   status                 text not null default 'open'
                            check (status in ('open','contained','closed')),
+  -- Trigger-to-containment milliseconds. Null until containment fires: an
+  -- incident below the threshold has nothing to measure, and 0 would read as
+  -- an instant response rather than an absent one. Sub-millisecond values are
+  -- real, so this is double precision rather than an integer.
+  containment_latency_ms double precision,
   created_at             timestamptz not null default now(),
   updated_at             timestamptz not null default now()
 );
@@ -82,9 +87,26 @@ create index if not exists idx_events_ip_time
 create index if not exists idx_events_dept_time
   on events (department_id, timestamp desc);
 
--- Realtime for the live org map. The dashboard subscribes to these directly.
--- NOTE: this is the step that fails silently if skipped — the map simply never
--- updates. The UI polls as a fallback, so the demo survives either way.
-alter publication supabase_realtime add table events;
-alter publication supabase_realtime add table incidents;
-alter publication supabase_realtime add table departments;
+-- Realtime is NOT required. The dashboard polls every 2 seconds, deliberately:
+-- Supabase realtime fails silently when a publication or RLS policy is missing,
+-- which produces a dashboard that looks connected and never updates. Polling is
+-- boring and observable.
+--
+-- Enable it only if you want it, and note `add table` errors if the table is
+-- already a member, so this block is guarded:
+do $$
+begin
+  alter publication supabase_realtime add table events;
+exception when duplicate_object then null;
+end $$;
+
+-- Row Level Security: these tables are reached only through server-side routes
+-- holding the service role key, which bypasses RLS. Enabling RLS with no policy
+-- therefore blocks the anon key (correct — nothing should read these from a
+-- browser) while leaving the server free.
+alter table departments         enable row level security;
+alter table honeytokens         enable row level security;
+alter table events              enable row level security;
+alter table incidents           enable row level security;
+alter table incident_events     enable row level security;
+alter table containment_actions enable row level security;

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
+    "@supabase/supabase-js": "^2.112.2",
     "@workspace/ui": "*",
     "groq-sdk": "^1.5.0",
     "lucide-react": "^1.30.0",

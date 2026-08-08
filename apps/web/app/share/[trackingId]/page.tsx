@@ -17,10 +17,10 @@ export default async function DecoyDocumentPage({
   params: Promise<{ trackingId: string }>
   searchParams: Promise<{ ip?: string }>
 }) {
-  ensureSeeded()
+  await ensureSeeded()
   const { trackingId } = await params
   const { ip } = await searchParams
-  const token = getHoneytokenByTrackingId(trackingId)
+  const token = await getHoneytokenByTrackingId(trackingId)
 
   // The pixel carries the demo's source-IP override so the "attacker" presents
   // a distinct address from the dashboard operator.
