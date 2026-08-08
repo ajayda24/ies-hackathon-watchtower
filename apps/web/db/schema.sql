@@ -80,8 +80,12 @@ create table if not exists containment_actions (
 
 -- Correlation looks up open incidents by (source_ip, department_id) and counts
 -- recent 'use' events per source_ip; these two indexes cover both hot paths.
-create index if not exists idx_incidents_open
-  on incidents (department_id, source_ip) where status = 'open';
+-- Correlation joins a trigger to any incident that is not closed, so the
+-- partial predicate has to match that rather than status = 'open': a contained
+-- incident is still the one further activity from the same source belongs to.
+create index if not exists idx_incidents_active
+  on incidents (department_id, source_ip, created_at desc)
+  where status <> 'closed';
 create index if not exists idx_events_ip_time
   on events (source_ip, timestamp desc);
 create index if not exists idx_events_dept_time

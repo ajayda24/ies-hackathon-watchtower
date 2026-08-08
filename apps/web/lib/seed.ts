@@ -1,4 +1,4 @@
-import { createDepartment, createHoneytoken, listDepartments } from "./store"
+import { createDepartment, createHoneytoken, listDepartments } from "@/lib/store"
 import type { HoneytokenType } from "./types"
 
 /**

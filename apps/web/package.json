@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import ./tests/register.mjs --test \"tests/*.test.ts\"",
+    "test:watch": "node --import ./tests/register.mjs --test --watch \"tests/*.test.ts\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

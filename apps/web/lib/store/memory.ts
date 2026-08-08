@@ -173,13 +173,23 @@ export function countRecentUseEvents(sourceIp: string, windowMs: number): number
 
 // ------------------------------------------------------------------ incidents
 
+/**
+ * The incident a new trigger from this source should join.
+ *
+ * Matches anything not closed, not merely "open". Containment flips an
+ * incident to "contained" on the second use, so matching only "open" meant a
+ * third and fourth use could not find it and each opened a fresh incident —
+ * a sustained attack fragmented into several incidents of one event apiece,
+ * which reads as several small problems rather than one escalating one.
+ * A human closing the incident is what ends correlation.
+ */
 export function findOpenIncident(
   sourceIp: string,
   departmentId: string
 ): Incident | undefined {
   return db().incidents.find(
     (i) =>
-      i.status === "open" &&
+      i.status !== "closed" &&
       i.source_ip === sourceIp &&
       i.department_id === departmentId
   )

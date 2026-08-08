@@ -1,0 +1,13 @@
+{
+  // Tests run on Node's native TypeScript stripping rather than through the
+  // Next bundler, and Node's ESM resolver requires explicit file extensions.
+  // `allowImportingTsExtensions` is scoped to this directory so the app's own
+  // config stays strict about them — extensionless imports remain correct
+  // everywhere the bundler resolves them.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["**/*.ts"]
+}

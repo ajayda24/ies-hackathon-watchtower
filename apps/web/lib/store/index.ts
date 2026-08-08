@@ -1,6 +1,6 @@
-import * as memory from "./store/memory"
-import * as sb from "./store/supabase"
-import { supabaseConfigured } from "./store/supabase"
+import * as memory from "./memory"
+import * as sb from "./supabase"
+import { supabaseConfigured } from "./supabase"
 import type {
   ContainmentActionRecord,
   Department,
@@ -8,7 +8,7 @@ import type {
   Honeytoken,
   Incident,
   SecurityLevel,
-} from "./types"
+} from "../types"
 
 /**
  * Storage facade.

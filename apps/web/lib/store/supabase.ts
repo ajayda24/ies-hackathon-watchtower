@@ -192,6 +192,7 @@ export async function countRecentUseEvents(
 
 // ------------------------------------------------------------------ incidents
 
+/** Matches anything not closed — see the memory backend for why. */
 export async function findOpenIncident(
   sourceIp: string,
   departmentId: string
@@ -199,9 +200,13 @@ export async function findOpenIncident(
   const { data, error } = await db()
     .from("incidents")
     .select("*")
-    .eq("status", "open")
+    .neq("status", "closed")
     .eq("source_ip", sourceIp)
     .eq("department_id", departmentId)
+    // Several may match once an incident has been contained and reopened by
+    // further activity; the newest is the one still being added to.
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle()
   if (error) throw error
   return data ?? undefined
