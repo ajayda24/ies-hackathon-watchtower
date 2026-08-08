@@ -1,5 +1,6 @@
 import { Blueprint, Kicker, TopNav } from "@/components/wt"
 import { ORG_NAME } from "@/lib/org"
+import { authConfigured } from "@/lib/auth"
 import { storageDegraded, storageMode } from "@/lib/store"
 
 export const dynamic = "force-dynamic"
@@ -32,6 +33,11 @@ const LIVE: Item[] = [
   { label: "Incident correlation with a severity ladder" },
   { label: "Scoped automated containment" },
   { label: "MITRE ATT&CK mapping on every event" },
+  {
+    label: "Insider threat detection",
+    detail:
+      "valid credentials do not help — an insider has no reason to use a decoy",
+  },
   { label: "Department self-registration", detail: "plants starter decoys on sign-up" },
   { label: "AI incident report", detail: "written from stored facts, print-ready" },
   {
@@ -57,10 +63,8 @@ const SIMPLIFIED: Item[] = [
   },
   // Storage is injected at render time by storageItem() — see the note above.
   { label: "Multi-tenancy", detail: "one organisation per instance" },
-  {
-    label: "Dashboard access",
-    detail: "no operator authentication — a deliberate 24-hour omission",
-  },
+  // Operator auth is injected at render time by authItem(), for the same
+  // reason as storage: whether the console is gated is a runtime fact.
   {
     label: "SIEM/SOAR forwarding",
     detail: "delivery verified against a live endpoint; field mapping unconfirmed",
@@ -106,9 +110,30 @@ function storageItem(): Item {
   }
 }
 
+/**
+ * Reports whether the console is actually gated on this deployment.
+ *
+ * Auth is opt-in, so a fixed "authentication: yes" line would be wrong on
+ * every instance running without a passphrase — including, most likely, the
+ * one a reader is looking at.
+ */
+function authItem(): Item {
+  return authConfigured()
+    ? {
+        label: "Operator authentication",
+        detail:
+          "shared passphrase, signed stateless session — no per-user accounts",
+      }
+    : {
+        label: "Operator authentication",
+        detail:
+          "built but not enabled here — set OPERATOR_PASSPHRASE to gate the console",
+      }
+}
+
 export default function ScopePage() {
-  // Storage sits with the other shortcuts, reported as it actually is.
-  const simplified = [...SIMPLIFIED, storageItem()]
+  // Both are reported as they actually are, not as configured elsewhere.
+  const simplified = [...SIMPLIFIED, storageItem(), authItem()]
 
   return (
     <div className="wt wt-board">
