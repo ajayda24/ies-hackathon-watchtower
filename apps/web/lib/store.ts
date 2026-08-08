@@ -46,6 +46,28 @@ export function db(): Tables {
   return globalStore.__watchtower
 }
 
+/**
+ * Empties every table and clears the seed flag.
+ *
+ * Mutates the existing object rather than reassigning `globalStore.__watchtower`:
+ * a fresh object would strand any module holding a reference to the old one,
+ * and the resulting split-brain store is exactly the kind of failure that
+ * surfaces mid-demo.
+ *
+ * The caller is responsible for re-seeding — `ensureSeeded()` will refill the
+ * fixtures on the next request now that `seeded` is false.
+ */
+export function resetStore(): void {
+  const store = db()
+  store.departments.length = 0
+  store.honeytokens.length = 0
+  store.events.length = 0
+  store.incidents.length = 0
+  store.incident_events.length = 0
+  store.containment_actions.length = 0
+  store.seeded = false
+}
+
 export const newId = () => randomUUID()
 export const now = () => new Date().toISOString()
 

@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import { Perimeter } from "@/components/perimeter"
 import { Blueprint, Kicker, LiveDot, TopNav } from "@/components/wt"
 import { useClock } from "@/components/use-clock"
@@ -217,9 +219,77 @@ export default function MapPage() {
                 </a>
               </Blueprint>
             )}
+
+            <DemoReset />
           </div>
         </div>
       </Blueprint>
+    </div>
+  )
+}
+
+/**
+ * Demo reset control.
+ *
+ * Two-step by design. This wipes every incident on the board, and the one
+ * moment it would be catastrophic to fire accidentally is the moment it is
+ * most likely to be clicked — mid-demo, reaching for something else. The first
+ * click only arms it; the second performs the reset, and the armed state
+ * expires on its own so it cannot sit primed indefinitely.
+ */
+function DemoReset() {
+  const [armed, setArmed] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  async function run() {
+    setBusy(true)
+    try {
+      await fetch("/api/demo/reset", { method: "POST" })
+      // Full reload rather than waiting for the 2s poll: after a reset the
+      // operator wants the clean board immediately, not on the next tick.
+      window.location.reload()
+    } catch {
+      setBusy(false)
+      setArmed(false)
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 22 }}>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => {
+          if (!armed) {
+            setArmed(true)
+            window.setTimeout(() => setArmed(false), 4000)
+            return
+          }
+          void run()
+        }}
+        className={`wt-btn ${armed ? "wt-btn-crit" : "wt-btn-secondary"}`}
+        style={{ width: "100%" }}
+      >
+        {busy
+          ? "Resetting…"
+          : armed
+            ? "Confirm — wipe all incidents"
+            : "Reset demo board"}
+      </button>
+      <div
+        className="wt-mono"
+        style={{
+          marginTop: 6,
+          fontSize: 10,
+          letterSpacing: ".06em",
+          color: "var(--color-faint)",
+          lineHeight: 1.5,
+        }}
+      >
+        {armed
+          ? "CLICK AGAIN TO CONFIRM"
+          : "CLEARS EVENTS AND INCIDENTS · RESTORES SEED DECOYS"}
+      </div>
     </div>
   )
 }
