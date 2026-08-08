@@ -1,12 +1,14 @@
 "use client"
 
-import { Blueprint, LiveDot, Tag, TopNav, clockTime, severityTheme } from "@/components/wt"
+import { Blueprint, LiveDot, Tag, TopNav, severityTheme } from "@/components/wt"
+import { useClock } from "@/components/use-clock"
 import { ORG_NAME } from "@/lib/org"
 import { useOverview } from "@/lib/useOverview"
 
 /** Incident index — the way into the Threat Timeline for a given incident. */
 export default function IncidentsPage() {
   const { data, error } = useOverview()
+  const clock = useClock()
 
   const incidents = data?.incidents ?? []
   const departments = data?.departments ?? []
@@ -77,7 +79,7 @@ export default function IncidentsPage() {
                         className="wt-mono"
                         style={{ fontSize: 12 }}
                       >
-                        {clockTime(incident.created_at)}
+                        {clock.time(incident.created_at)}
                       </td>
                       <td data-label="Severity">
                         <Tag bg={theme.bg} color={theme.color}>

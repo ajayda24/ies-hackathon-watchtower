@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState } from "react"
 
-import { Blueprint, LiveDot, Tag, TopNav, clockTimeMs } from "@/components/wt"
+import { Blueprint, LiveDot, Tag, TopNav } from "@/components/wt"
+import { useClock } from "@/components/use-clock"
 import { ORG_NAME } from "@/lib/org"
 import { useOverview } from "@/lib/useOverview"
 import type { Event, Honeytoken } from "@/lib/types"
@@ -189,6 +190,7 @@ function EventRow({
   fresh: boolean
 }) {
   const isUse = event.event_type === "use"
+  const clock = useClock()
 
   return (
     <tr
@@ -200,7 +202,7 @@ function EventRow({
         className="wt-mono"
         style={{ fontSize: 12, color: isUse ? "var(--color-text)" : "#c8d3de" }}
       >
-        {clockTimeMs(event.timestamp)}
+        {clock.timeMs(event.timestamp)}
       </td>
       <td data-label="Department" style={{ fontSize: 13 }}>
         {deptName}

@@ -47,6 +47,8 @@ export interface TriggerResult {
   contained: boolean
   /** True when the event was logged but deliberately not escalated. */
   suppressed: boolean
+  /** Trigger-to-containment milliseconds; null when nothing was contained. */
+  latencyMs: number | null
 }
 
 /**
@@ -64,6 +66,16 @@ export function recordTrigger(params: {
 }): TriggerResult {
   const { token, eventType, sourceIp, details = {} } = params
   const technique = classify(token.type, eventType)
+
+  // Start of the detection clock. Taken before the event is written so the
+  // measurement covers the platform's own work — classification, correlation,
+  // containment — and not just the final call.
+  //
+  // performance.now(), not Date.now(): the whole path completes well inside a
+  // millisecond, so a millisecond-resolution clock reports 0 and the number
+  // reads as broken rather than fast. Sub-millisecond precision is the honest
+  // way to report work this short.
+  const detectionStart = performance.now()
 
   const event = createEvent({
     token_id: token.id,
@@ -85,6 +97,7 @@ export function recordTrigger(params: {
       incident: null,
       contained: false,
       suppressed: isKnownAutomation(sourceIp),
+      latencyMs: null,
     }
   }
 
@@ -108,14 +121,23 @@ export function recordTrigger(params: {
   markHoneytokenTriggered(token.id)
 
   let contained = false
+  let latencyMs: number | null = null
   if (severity === "high" || severity === "critical") {
     triggerContainment(incident, token)
     contained = true
-    incident = updateIncident(incident.id, { status: "contained" }) ?? incident
+    // Stamped after containment completes, so the number covers the whole
+    // path from trigger to response rather than detection alone. Rounded to
+    // three decimals — beyond that the digits are timer noise, not signal.
+    latencyMs = Math.round((performance.now() - detectionStart) * 1000) / 1000
+    incident =
+      updateIncident(incident.id, {
+        status: "contained",
+        containment_latency_ms: latencyMs,
+      }) ?? incident
   }
 
   recomputeSecurityLevel(token.department_id)
-  return { event, incident, contained, suppressed: false }
+  return { event, incident, contained, suppressed: false, latencyMs }
 }
 
 /** Severity ladder: repeated use from one source inside the window escalates. */

@@ -8,9 +8,10 @@ import {
   LiveDot,
   Tag,
   TopNav,
-  clockTime,
   severityTheme,
 } from "@/components/wt"
+import { useClock } from "@/components/use-clock"
+import { formatLatency } from "@/lib/time"
 import { ORG_NAME } from "@/lib/org"
 import type {
   ContainmentActionRecord,
@@ -42,6 +43,7 @@ export default function IncidentDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const clock = useClock()
   const [detail, setDetail] = useState<Detail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [ai, setAi] = useState<{
@@ -172,9 +174,27 @@ export default function IncidentDetailPage({
                     color: "var(--color-faint)",
                   }}
                 >
-                  OPENED {clockTime(incident.created_at)}
-                  {contained && ` · CONTAINED ${clockTime(incident.updated_at)}`}
+                  OPENED {clock.time(incident.created_at)}
+                  {contained && ` · CONTAINED ${clock.time(incident.updated_at)}`}
                 </span>
+                {/* The detection-speed claim, measured rather than asserted. */}
+                {incident.containment_latency_ms !== null && (
+                  <span
+                    className="wt-mono"
+                    title="Measured from the triggering event to containment completing"
+                    style={{
+                      fontSize: 10.5,
+                      letterSpacing: ".08em",
+                      color: "var(--ok-text)",
+                      border: "1px solid rgba(47,191,155,.35)",
+                      background: "rgba(47,191,155,.08)",
+                      padding: "2px 7px",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    CONTAINED IN {formatLatency(incident.containment_latency_ms)}
+                  </span>
+                )}
               </div>
 
               <h3
@@ -363,7 +383,7 @@ export default function IncidentDetailPage({
                       className="wt-mono"
                       style={{ fontSize: 11, color: "var(--color-faint)" }}
                     >
-                      {clockTime(action.timestamp)} ·{" "}
+                      {clock.time(action.timestamp)} ·{" "}
                       {action.automated ? "automatic" : "manual"}
                     </div>
                   </div>
@@ -431,7 +451,7 @@ export default function IncidentDetailPage({
                 lineHeight: 1.6,
               }}
             >
-              ECS-SHAPED JSON · NOT VALIDATED AGAINST A LIVE INDEXER
+              ECS-SHAPED JSON · DELIVERY VERIFIED · FIELD MAPPING UNCONFIRMED
             </div>
 
             <Blueprint
@@ -474,6 +494,7 @@ function TimelineStep({
   last: boolean
 }) {
   const isUse = event.event_type === "use"
+  const clock = useClock()
 
   return (
     <div style={{ position: "relative", marginBottom: last ? 0 : 24 }}>
@@ -500,7 +521,7 @@ function TimelineStep({
           marginBottom: 3,
         }}
       >
-        {clockTime(event.timestamp)} · {deptName.toUpperCase()}
+        {clock.time(event.timestamp)} · {deptName.toUpperCase()}
       </div>
       <div style={{ fontSize: 15, marginBottom: 3 }}>
         {stepTitle(event, token)}

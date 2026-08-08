@@ -201,6 +201,8 @@ export function TopNav({
   )
 }
 
-// Re-exported so screens keep importing clock helpers from one place, while
-// server routes can pull the same implementation from @/lib/time directly.
-export { clockTimeUtc as clockTime, clockTimeMsUtc as clockTimeMs } from "@/lib/time"
+// No clock re-export here on purpose. Screens render in the viewer's timezone
+// via useClock() (components/use-clock.ts), which is hydration-safe; server
+// routes import the UTC formatters from @/lib/time directly. Re-exporting the
+// UTC helpers under a neutral name is what let a server-side formatter drift
+// into client screens in the first place.

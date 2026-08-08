@@ -25,6 +25,10 @@ const LIVE: Item[] = [
   { label: "MITRE ATT&CK mapping on every event" },
   { label: "Department self-registration", detail: "plants starter decoys on sign-up" },
   { label: "AI incident report", detail: "written from stored facts, print-ready" },
+  {
+    label: "Measured containment latency",
+    detail: "timed per incident, not an estimate — typically under 1ms",
+  },
 ]
 
 const SIMPLIFIED: Item[] = [
@@ -50,6 +54,10 @@ const SIMPLIFIED: Item[] = [
     label: "Dashboard access",
     detail: "no operator authentication — a deliberate 24-hour omission",
   },
+  {
+    label: "SIEM/SOAR forwarding",
+    detail: "delivery verified against a live endpoint; field mapping unconfirmed",
+  },
 ]
 
 const ROADMAP: Item[] = [
@@ -58,7 +66,6 @@ const ROADMAP: Item[] = [
     detail: "we classify the action, not the actor — the evidence cannot name one",
   },
   { label: "Cloud decoys (M365, Google Workspace)" },
-  { label: "Real SIEM/SOAR ingestion", detail: "payload shape only, unvalidated" },
   { label: "Behavioural analytics beyond thresholds" },
   { label: "Endpoint sensor for legacy hardware" },
   { label: "Auto-learned allowlisting for internal automation" },

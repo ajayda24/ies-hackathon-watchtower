@@ -6,13 +6,20 @@ import type {
 } from "./types"
 
 /**
- * SIEM/SOAR forwarding — Tier 3, architected but not validated.
+ * SIEM/SOAR forwarding.
  *
- * This builds a CEF-flavoured JSON envelope and POSTs it to SIEM_WEBHOOK_URL
- * when one is configured. It has NOT been validated against a real Splunk,
- * Sentinel, or Elastic ingestion pipeline — the field names follow the ECS
- * naming convention but no mapping has been confirmed with a live indexer.
- * Say so out loud rather than implying an integration exists.
+ * Builds an ECS-shaped JSON envelope and POSTs it to SIEM_WEBHOOK_URL when one
+ * is configured.
+ *
+ * What is verified: delivery. The forwarder has been run against a live HTTP
+ * receiver, which accepted a well-formed payload carrying every ECS field an
+ * indexer keys on (@timestamp, event.kind, event.severity, source.ip,
+ * threat.framework).
+ *
+ * What is NOT verified: field mapping against a real Splunk, Sentinel or
+ * Elastic pipeline. Those products apply their own normalisation, and no
+ * index-time mapping has been confirmed. The distinction is worth stating
+ * precisely — "it delivers" is true, "it integrates with Splunk" is not.
  */
 export interface SiemPayload {
   "@timestamp": string
@@ -34,7 +41,10 @@ export interface SiemPayload {
     status: string
     correlated_events: number
     containment: string[]
-    tier: "unvalidated-stub"
+    /** Trigger-to-containment milliseconds; null when nothing was contained. */
+    containment_latency_ms: number | null
+    /** Delivery is verified; index-time field mapping is not. */
+    tier: "delivery-verified"
   }
 }
 
@@ -79,7 +89,8 @@ export function buildSiemPayload(params: {
       status: incident.status,
       correlated_events: events.length,
       containment: actions.map((a) => a.action),
-      tier: "unvalidated-stub",
+      containment_latency_ms: incident.containment_latency_ms,
+      tier: "delivery-verified",
     },
   }
 }

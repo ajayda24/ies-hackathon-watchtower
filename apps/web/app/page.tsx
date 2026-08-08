@@ -1,7 +1,8 @@
 "use client"
 
 import { Perimeter } from "@/components/perimeter"
-import { Blueprint, Kicker, LiveDot, TopNav, clockTime } from "@/components/wt"
+import { Blueprint, Kicker, LiveDot, TopNav } from "@/components/wt"
+import { useClock } from "@/components/use-clock"
 import { ZoneCard } from "@/components/zone-card"
 import { ORG_NAME } from "@/lib/org"
 import { useOverview } from "@/lib/useOverview"
@@ -13,6 +14,7 @@ import { useOverview } from "@/lib/useOverview"
  */
 export default function MapPage() {
   const { data, error } = useOverview()
+  const clock = useClock()
 
   const departments = data?.departments ?? []
   const events = data?.events ?? []
@@ -65,7 +67,7 @@ export default function MapPage() {
                 className="wt-mono"
                 style={{ fontSize: 11, color: "var(--color-faint)" }}
               >
-                {data ? `${clockTime(data.generated_at)} UTC` : "CONNECTING…"}
+                {data ? `${clock.time(data.generated_at)} ${clock.zone}` : "CONNECTING…"}
               </span>
             </>
           }
